@@ -90,9 +90,6 @@ export default function About() {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(242,169,59,0.11),transparent_58%)]" />
               <IndiaMapOverlay progress={locationProgress} compact />
             </div>
-            <div className="mt-2 text-center text-[9px] font-mono tracking-[0.14em] text-amber/70">
-              22.255471° N / 84.903671° E
-            </div>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -202,9 +202,69 @@ function EarthScene({ progress }) {
   );
 }
 
+const MAP_BOUNDS = {
+  minLongitude: 68,
+  maxLongitude: 97.7,
+  minLatitude: 6,
+  maxLatitude: 37.5,
+};
+
+function projectMapPoint(longitude, latitude) {
+  return {
+    x: ((longitude - MAP_BOUNDS.minLongitude) / (MAP_BOUNDS.maxLongitude - MAP_BOUNDS.minLongitude)) * 220,
+    y: ((MAP_BOUNDS.maxLatitude - latitude) / (MAP_BOUNDS.maxLatitude - MAP_BOUNDS.minLatitude)) * 280,
+  };
+}
+
+function ringToPath(ring) {
+  return ring
+    .map(([longitude, latitude], index) => {
+      const point = projectMapPoint(longitude, latitude);
+      return `${index === 0 ? 'M' : 'L'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+    })
+    .join(' ');
+}
+
+function geometryToPath(geometry) {
+  if (geometry.type === 'Polygon') {
+    return geometry.coordinates.map(ringToPath).join(' ');
+  }
+
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates
+      .flatMap((polygon) => polygon.map(ringToPath))
+      .join(' ');
+  }
+
+  return '';
+}
+
 export function IndiaMapOverlay({ progress }) {
+  const [mapData, setMapData] = useState(null);
+  const mapId = useId().replace(/:/g, '');
   const mapOpacity = THREE.MathUtils.smoothstep(progress, 0.24, 0.66);
   const mapScale = 0.72 + mapOpacity * 0.28;
+  const target = projectMapPoint(84.903671, 22.255471);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/maps/india-states-simplified.json')
+      .then((response) => {
+        if (!response.ok) throw new Error('India map could not be loaded');
+        return response.json();
+      })
+      .then((data) => {
+        if (!cancelled) setMapData(data);
+      })
+      .catch(() => {
+        if (!cancelled) setMapData({ features: [] });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div
@@ -223,41 +283,59 @@ export function IndiaMapOverlay({ progress }) {
           aria-label="India location tracking map"
         >
           <defs>
-            <pattern id="india-grid" width="14" height="14" patternUnits="userSpaceOnUse">
-              <path d="M 14 0 L 0 0 0 14" fill="none" stroke="#f2a93b" strokeWidth="0.35" opacity="0.45" />
+            <pattern id={`${mapId}-grid`} width="14" height="14" patternUnits="userSpaceOnUse">
+              <path d="M 14 0 L 0 0 0 14" fill="none" stroke="#f2a93b" strokeWidth="0.35" opacity="0.35" />
             </pattern>
-            <filter id="india-glow">
-              <feGaussianBlur stdDeviation="3" result="blur" />
+            <filter id={`${mapId}-glow`}>
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
-          <path
-            d="M94 10 111 17 128 21 142 35 157 42 153 55 170 65 164 80 176 91 165 106 161 124 151 137 146 153 136 166 130 184 119 210 108 238 98 227 91 207 82 191 73 176 62 161 53 149 42 143 35 128 23 116 27 101 17 88 24 73 37 62 49 50 63 42 76 29 87 23Z"
-            fill="url(#india-grid)"
-            stroke="#f2a93b"
-            strokeWidth="1.5"
-            filter="url(#india-glow)"
-          />
-          <path
-            d="M94 10 111 17 128 21 142 35 157 42 153 55 170 65 164 80 176 91 165 106 161 124 151 137 146 153 136 166 130 184 119 210 108 238 98 227 91 207 82 191 73 176 62 161 53 149 42 143 35 128 23 116 27 101 17 88 24 73 37 62 49 50 63 42 76 29 87 23Z"
-            fill="none"
-            stroke="#f2a93b"
-            strokeWidth="0.8"
-            strokeDasharray="3 5"
-            opacity="0.7"
-          />
-          <circle cx="110" cy="165" r="5" fill="#f2a93b" filter="url(#india-glow)" />
-          <circle cx="110" cy="165" r="11" fill="none" stroke="#f2a93b" strokeWidth="1" opacity="0.8">
+          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.45" />
+          {mapData?.features.map((feature) => {
+            const stateName = feature.properties?.NAME_1 ?? '';
+            const isOdisha = /odisha|orissa/i.test(stateName);
+
+            return (
+              <path
+                key={stateName}
+                d={geometryToPath(feature.geometry)}
+                fill={isOdisha ? '#f2a93b' : '#172231'}
+                fillOpacity={isOdisha ? 0.9 : 0.68}
+                stroke={isOdisha ? '#ffd27a' : '#6a7889'}
+                strokeWidth={isOdisha ? 1.4 : 0.55}
+                strokeLinejoin="round"
+                filter={isOdisha ? `url(#${mapId}-glow)` : undefined}
+              />
+            );
+          })}
+          <circle cx={target.x} cy={target.y} r="5" fill="#f2a93b" filter={`url(#${mapId}-glow)`} />
+          <circle cx={target.x} cy={target.y} r="11" fill="none" stroke="#f2a93b" strokeWidth="1" opacity="0.8">
             <animate attributeName="r" values="8;18;8" dur="2.1s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.8;0.05;0.8" dur="2.1s" repeatCount="indefinite" />
           </circle>
+          <line
+            x1={target.x}
+            y1={target.y}
+            x2={Math.min(target.x + 38, 208)}
+            y2={target.y - 18}
+            stroke="#f2a93b"
+            strokeWidth="0.8"
+            strokeDasharray="2 3"
+          />
         </svg>
-        <div className="absolute left-[52%] top-[59%] translate-x-3 -translate-y-1/2 whitespace-nowrap text-left">
+        <div
+          className="absolute translate-x-3 -translate-y-[calc(50%+18px)] whitespace-nowrap text-left"
+          style={{
+            left: `${Math.min((target.x / 220) * 100 + 14, 68)}%`,
+            top: `${(target.y / 280) * 100}%`,
+          }}
+        >
           <div className="h-px w-14 bg-amber/70 mb-2" />
-          <div className="font-mono text-[9px] tracking-[0.22em] text-amber uppercase">Target locked</div>
+          <div className="font-mono text-[9px] tracking-[0.22em] text-amber uppercase">Odisha / target locked</div>
           <div className="font-mono text-[10px] text-white/75 mt-1">{COMPANY_COORDINATES}</div>
           <div className="text-[11px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
         </div>

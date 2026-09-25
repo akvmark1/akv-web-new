@@ -114,7 +114,7 @@ function EarthScene({ progress }) {
     smoothProgress.current = THREE.MathUtils.damp(
       smoothProgress.current,
       progress,
-      4.5,
+      3.2,
       delta
     );
     const p = smoothProgress.current;
@@ -147,7 +147,7 @@ function EarthScene({ progress }) {
 
     state.camera.position.lerp(
       new THREE.Vector3(0, 0.22 - handoff * 0.2, 5.1 - handoff * 0.95),
-      0.045
+      0.035
     );
     state.camera.lookAt(0, 0, -handoff * 0.25);
   });

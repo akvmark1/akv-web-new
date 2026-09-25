@@ -392,6 +392,22 @@ function WebGLScene({ progress }) {
   );
 }
 
+class WebGLSceneBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <FallbackScene progress={this.props.progress} />;
+    }
+
+    return this.props.children;
+  }
+}
+
 export default function Drone3DCanvas({ progress = 0, className = '', showMap = true }) {
   const [webGLAvailable] = useState(() => {
     const canvas = document.createElement('canvas');
@@ -413,7 +429,13 @@ export default function Drone3DCanvas({ progress = 0, className = '', showMap = 
 
   return (
     <div className={`w-full h-full min-h-[420px] md:min-h-[520px] relative pointer-events-none ${className}`}>
-      {webGLAvailable ? <WebGLScene progress={progress} /> : <FallbackScene progress={progress} />}
+      {webGLAvailable ? (
+        <WebGLSceneBoundary progress={progress}>
+          <WebGLScene progress={progress} />
+        </WebGLSceneBoundary>
+      ) : (
+        <FallbackScene progress={progress} />
+      )}
       {showMap && <IndiaMapOverlay progress={progress} />}
       <div className="absolute inset-x-4 top-5 flex items-start justify-between font-mono text-[9px] tracking-[0.18em] text-white/45 uppercase">
         <div>

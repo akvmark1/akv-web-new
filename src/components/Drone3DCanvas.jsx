@@ -239,12 +239,15 @@ function geometryToPath(geometry) {
   return '';
 }
 
-export function IndiaMapOverlay({ progress }) {
+export function IndiaMapOverlay({ progress, compact = false }) {
   const [mapData, setMapData] = useState(null);
   const mapId = useId().replace(/:/g, '');
   const mapOpacity = THREE.MathUtils.smoothstep(progress, 0.24, 0.66);
   const mapScale = 0.72 + mapOpacity * 0.28;
   const target = projectMapPoint(84.903671, 22.255471);
+  const mapSize = compact
+    ? 'w-[180px] h-[220px] sm:w-[195px] sm:h-[235px]'
+    : 'w-[260px] h-[320px] md:w-[300px] md:h-[360px]';
 
   useEffect(() => {
     let cancelled = false;
@@ -273,7 +276,7 @@ export function IndiaMapOverlay({ progress }) {
       aria-hidden="true"
     >
       <div
-        className="relative w-[260px] h-[320px] md:w-[300px] md:h-[360px] transition-transform duration-700"
+        className={`relative ${mapSize} transition-transform duration-700`}
         style={{ transform: `scale(${mapScale})` }}
       >
         <svg
@@ -327,18 +330,26 @@ export function IndiaMapOverlay({ progress }) {
             strokeDasharray="2 3"
           />
         </svg>
-        <div
-          className="absolute translate-x-3 -translate-y-[calc(50%+18px)] whitespace-nowrap text-left"
-          style={{
-            left: `${Math.min((target.x / 220) * 100 + 14, 68)}%`,
-            top: `${(target.y / 280) * 100}%`,
-          }}
-        >
-          <div className="h-px w-14 bg-amber/70 mb-2" />
-          <div className="font-mono text-[9px] tracking-[0.22em] text-amber uppercase">Odisha / target locked</div>
-          <div className="font-mono text-[10px] text-white/75 mt-1">{COMPANY_COORDINATES}</div>
-          <div className="text-[11px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
-        </div>
+        {compact ? (
+          <div className="absolute inset-x-0 bottom-0 text-center leading-tight">
+            <div className="font-mono text-[8px] tracking-[0.16em] text-amber uppercase">Odisha / target locked</div>
+            <div className="font-mono text-[9px] text-white/80 mt-1">{COMPANY_COORDINATES}</div>
+            <div className="text-[9px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
+          </div>
+        ) : (
+          <div
+            className="absolute translate-x-3 -translate-y-[calc(50%+18px)] whitespace-nowrap text-left"
+            style={{
+              left: `${Math.min((target.x / 220) * 100 + 14, 68)}%`,
+              top: `${(target.y / 280) * 100}%`,
+            }}
+          >
+            <div className="h-px w-14 bg-amber/70 mb-2" />
+            <div className="font-mono text-[9px] tracking-[0.22em] text-amber uppercase">Odisha / target locked</div>
+            <div className="font-mono text-[10px] text-white/75 mt-1">{COMPANY_COORDINATES}</div>
+            <div className="text-[11px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -85,9 +85,9 @@ export default function About() {
             </p>
           </div>
 
-          <div className="lg:col-span-5 h-[360px] relative border border-amber/15 bg-navy-2/30 overflow-hidden">
+          <div className="lg:col-span-5 h-[280px] sm:h-[300px] relative border border-amber/15 bg-navy-2/30 overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(242,169,59,0.08),transparent_60%)]" />
-            <IndiaMapOverlay progress={locationProgress} />
+            <IndiaMapOverlay progress={locationProgress} compact />
             <div className="absolute inset-x-4 top-4 flex items-start justify-between font-mono text-[9px] tracking-[0.16em] uppercase pointer-events-none">
               <span className="text-amber/70">Mission origin / IN-OD</span>
               <span className="text-accentgreen">● Location verified</span>

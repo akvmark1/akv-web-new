@@ -1,0 +1,1 @@
+- [WebGL preview fallback](webgl-preview-fallback.md) — Replit preview may lack a usable WebGL context, so 3D hero visuals need a visible non-WebGL fallback.

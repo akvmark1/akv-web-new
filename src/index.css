@@ -78,6 +78,15 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+@keyframes globe-spin {
+  from {
+    background-position: 0% center;
+  }
+  to {
+    background-position: 100% center;
+  }
+}
+
 .radar-glow {
   animation: radar-pulse 3s infinite ease-in-out;
 }

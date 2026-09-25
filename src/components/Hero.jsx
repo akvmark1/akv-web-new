@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ShieldCheck, Cpu } from 'lucide-react';
 import Drone3DCanvas from './Drone3DCanvas';
 
 export default function Hero() {
+  const heroRef = useRef(null);
+  const [sceneProgress, setSceneProgress] = useState(0);
+
+  useEffect(() => {
+    const updateSceneProgress = () => {
+      if (!heroRef.current) return;
+
+      const { top, height } = heroRef.current.getBoundingClientRect();
+      const progress = (window.innerHeight * 0.14 - top) / Math.max(height * 0.78, 1);
+      setSceneProgress(Math.min(1, Math.max(0, progress)));
+    };
+
+    window.addEventListener('scroll', updateSceneProgress, { passive: true });
+    window.addEventListener('resize', updateSceneProgress);
+
+    return () => {
+      window.removeEventListener('scroll', updateSceneProgress);
+      window.removeEventListener('resize', updateSceneProgress);
+    };
+  }, []);
+
   const stats = [
     { value: '40 KG', label: 'Payload capacity', sub: 'Modular sensor/cargo bay' },
     { value: '30+ MIN', label: 'Flight time', sub: 'Hybrid power endurance' },
@@ -13,6 +34,7 @@ export default function Hero() {
   return (
     <section
       id="hero"
+      ref={heroRef}
       className="relative min-h-screen pt-28 pb-16 flex flex-col justify-between bg-navy overflow-hidden"
     >
       {/* Background ambient aerospace glow & radar grids */}
@@ -73,14 +95,9 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right Column: 3D Interactive Aerospace Canvas */}
+          {/* Right Column: scroll-driven orbital intelligence visual */}
           <div className="lg:col-span-5 h-[400px] md:h-[480px] lg:h-[540px] relative flex items-center justify-center">
-            {/* Ambient circular frame */}
-            <div className="absolute w-[320px] md:w-[420px] h-[320px] md:h-[420px] rounded-full border border-amber/15 radar-glow pointer-events-none" />
-            <div className="absolute w-[240px] md:w-[320px] h-[240px] md:h-[320px] rounded-full border border-dashed border-white/10 pointer-events-none" />
-
-            {/* 3D Canvas */}
-            <Drone3DCanvas />
+            <Drone3DCanvas progress={sceneProgress} />
           </div>
         </div>
       </div>

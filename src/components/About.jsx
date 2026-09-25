@@ -1,6 +1,29 @@
+import React, { useEffect, useRef, useState } from 'react';
 import { Target, Award, Users, ChevronRight } from 'lucide-react';
+import { IndiaMapOverlay } from './Drone3DCanvas';
 
 export default function About() {
+  const aboutRef = useRef(null);
+  const [locationProgress, setLocationProgress] = useState(0);
+
+  useEffect(() => {
+    const updateLocationProgress = () => {
+      if (!aboutRef.current) return;
+
+      const { top, height } = aboutRef.current.getBoundingClientRect();
+      const progress = (window.innerHeight - top) / Math.max(window.innerHeight * 0.72, height * 0.35);
+      setLocationProgress(Math.min(1, Math.max(0, progress)));
+    };
+
+    window.addEventListener('scroll', updateLocationProgress, { passive: true });
+    window.addEventListener('resize', updateLocationProgress);
+
+    return () => {
+      window.removeEventListener('scroll', updateLocationProgress);
+      window.removeEventListener('resize', updateLocationProgress);
+    };
+  }, []);
+
   const team = [
     {
       name: 'Akshay Kumar Gardia',
@@ -41,24 +64,35 @@ export default function About() {
   ];
 
   return (
-    <section id="about" className="py-24 bg-navy relative border-t border-white/10">
+    <section id="about" ref={aboutRef} className="py-24 bg-navy relative border-t border-white/10 overflow-hidden">
       {/* Background radial accent */}
       <div className="absolute top-1/4 right-0 w-80 h-80 bg-amber/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-[1240px] mx-auto px-6 md:px-10 relative z-10">
         {/* Section Header */}
-        <div className="max-w-2xl mb-16">
-          <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
-            <span className="w-1.5 h-1.5 bg-amber rounded-full" />
-            <span>About Us</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-16">
+          <div className="lg:col-span-7 max-w-2xl">
+            <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
+              <span className="w-1.5 h-1.5 bg-amber rounded-full" />
+              <span>About Us</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+              Deep-tech, built for missions that can't afford to fail.
+            </h2>
+            <p className="mt-5 text-white/70 text-base md:text-lg leading-relaxed">
+              AkashVahini Private Limited is an innovation-driven deep-tech startup building
+              intelligent, autonomous drone platforms for critical real-world applications.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-            Deep-tech, built for missions that can't afford to fail.
-          </h2>
-          <p className="mt-5 text-white/70 text-base md:text-lg leading-relaxed">
-            AkashVahini Private Limited is an innovation-driven deep-tech startup building
-            intelligent, autonomous drone platforms for critical real-world applications.
-          </p>
+
+          <div className="lg:col-span-5 h-[360px] relative border border-amber/15 bg-navy-2/30 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(242,169,59,0.08),transparent_60%)]" />
+            <IndiaMapOverlay progress={locationProgress} />
+            <div className="absolute inset-x-4 top-4 flex items-start justify-between font-mono text-[9px] tracking-[0.16em] uppercase pointer-events-none">
+              <span className="text-amber/70">Mission origin / IN-OD</span>
+              <span className="text-accentgreen">● Location verified</span>
+            </div>
+          </div>
         </div>
 
         {/* Mission & Recognitions Split */}

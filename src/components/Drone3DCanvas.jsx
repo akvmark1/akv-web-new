@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const COMPANY_COORDINATES = '22.2507° N / 84.9018° E';
+const COMPANY_COORDINATES = '22.255471° N / 84.903671° E';
 
 function latitudeLongitudeToVector3(latitude, longitude, radius) {
   const lat = THREE.MathUtils.degToRad(latitude);
@@ -55,7 +55,7 @@ function TargetMarker({ progress }) {
   const markerRef = useRef();
   const pulseRef = useRef();
   const markerPosition = useMemo(
-    () => latitudeLongitudeToVector3(22.25, 84.9, 1.65),
+    () => latitudeLongitudeToVector3(22.255471, 84.903671, 1.65),
     []
   );
 
@@ -202,7 +202,7 @@ function EarthScene({ progress }) {
   );
 }
 
-function IndiaMapOverlay({ progress }) {
+export function IndiaMapOverlay({ progress }) {
   const mapOpacity = THREE.MathUtils.smoothstep(progress, 0.24, 0.66);
   const mapScale = 0.72 + mapOpacity * 0.28;
 

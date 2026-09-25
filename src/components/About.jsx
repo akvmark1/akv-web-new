@@ -86,19 +86,12 @@ export default function About() {
           </div>
 
           <div className="lg:col-span-5 w-full max-w-[460px] justify-self-end">
-            <div className="h-[250px] sm:h-[275px] lg:h-[300px] relative rounded-sm border border-amber/25 bg-navy-2/55 shadow-[0_18px_60px_rgba(0,0,0,0.22)] overflow-hidden">
+            <div className="h-[250px] sm:h-[275px] lg:h-[300px] relative bg-navy-2/55 overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(242,169,59,0.11),transparent_58%)]" />
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber/60 to-transparent" />
-              <div className="absolute inset-x-4 bottom-4 h-px bg-white/10" />
-            <IndiaMapOverlay progress={locationProgress} compact />
-              <div className="absolute inset-x-4 top-4 flex items-start justify-between font-mono text-[8px] sm:text-[9px] tracking-[0.14em] uppercase pointer-events-none">
-                <span className="text-amber/80">Mission origin / IN-OD</span>
-                <span className="text-accentgreen">● Location verified</span>
-              </div>
+              <IndiaMapOverlay progress={locationProgress} compact />
             </div>
-            <div className="mt-3 flex items-center justify-between px-1 text-[9px] font-mono uppercase tracking-[0.14em] text-white/40">
-              <span>Rourkela, Odisha</span>
-              <span className="text-amber/70">22.255471 · 84.903671</span>
+            <div className="mt-2 text-center text-[9px] font-mono tracking-[0.14em] text-amber/70">
+              22.255471° N / 84.903671° E
             </div>
           </div>
         </div>

@@ -331,10 +331,8 @@ export function IndiaMapOverlay({ progress, compact = false }) {
           />
         </svg>
         {compact ? (
-          <div className="absolute inset-x-0 bottom-0 text-center leading-tight">
-            <div className="font-mono text-[8px] tracking-[0.16em] text-amber uppercase">Odisha / target locked</div>
-            <div className="font-mono text-[9px] text-white/80 mt-1">{COMPANY_COORDINATES}</div>
-            <div className="text-[9px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
+          <div className="absolute inset-x-0 bottom-1 text-center">
+            <div className="font-mono text-[9px] tracking-[0.12em] text-amber/85">{COMPANY_COORDINATES}</div>
           </div>
         ) : (
           <div

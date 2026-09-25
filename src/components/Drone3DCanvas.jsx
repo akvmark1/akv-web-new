@@ -118,8 +118,8 @@ function EarthScene({ progress }) {
       delta
     );
     const p = smoothProgress.current;
-    const handoff = THREE.MathUtils.smoothstep(p, 0.28, 0.82);
-    const globeOpacity = 1 - THREE.MathUtils.smoothstep(p, 0.42, 0.82);
+    const handoff = THREE.MathUtils.smoothstep(p, 0.16, 0.68);
+    const globeOpacity = 1 - THREE.MathUtils.smoothstep(p, 0.22, 0.62);
 
     if (earthRef.current) {
       earthRef.current.rotation.y += delta * (0.08 + p * 0.1);
@@ -203,7 +203,7 @@ function EarthScene({ progress }) {
 }
 
 function IndiaMapOverlay({ progress }) {
-  const mapOpacity = Math.min(1, Math.max(0, (progress - 0.42) * 2.1));
+  const mapOpacity = THREE.MathUtils.smoothstep(progress, 0.24, 0.66);
   const mapScale = 0.72 + mapOpacity * 0.28;
 
   return (
@@ -267,7 +267,7 @@ function IndiaMapOverlay({ progress }) {
 }
 
 function FallbackScene({ progress }) {
-  const globeOpacity = 1 - Math.min(1, Math.max(0, (progress - 0.28) * 1.65));
+  const globeOpacity = 1 - THREE.MathUtils.smoothstep(progress, 0.18, 0.62);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -305,20 +305,19 @@ function WebGLScene({ progress }) {
   );
 }
 
-export default function Drone3DCanvas({ progress = 0 }) {
+export default function Drone3DCanvas({ progress = 0, className = '' }) {
   const [webGLAvailable] = useState(() => {
     const canvas = document.createElement('canvas');
     const context =
       canvas.getContext('webgl2', { failIfMajorPerformanceCaveat: true }) ||
       canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true });
-    context?.getExtension('WEBGL_lose_context')?.loseContext();
     return Boolean(context);
   });
 
-  const stage = progress < 0.42 ? 'global tracking' : progress < 0.82 ? 'regional handoff' : 'target locked';
+  const stage = progress < 0.28 ? 'global tracking' : progress < 0.66 ? 'regional handoff' : 'target locked';
 
   return (
-    <div className="w-full h-full min-h-[420px] md:min-h-[520px] relative pointer-events-none">
+    <div className={`w-full h-full min-h-[420px] md:min-h-[520px] relative pointer-events-none ${className}`}>
       {webGLAvailable ? <WebGLScene progress={progress} /> : <FallbackScene progress={progress} />}
       <IndiaMapOverlay progress={progress} />
       <div className="absolute inset-x-4 top-5 flex items-start justify-between font-mono text-[9px] tracking-[0.18em] text-white/45 uppercase">
@@ -334,7 +333,7 @@ export default function Drone3DCanvas({ progress = 0 }) {
       <div className="absolute inset-x-4 bottom-4 flex items-end justify-between font-mono text-[9px] tracking-wider text-white/45 uppercase">
         <div>
           <div className="text-white/30">Coordinates</div>
-          <div className="mt-1 text-amber/90">{progress > 0.72 ? COMPANY_COORDINATES : '34.1526° N / 118.2437° W'}</div>
+          <div className="mt-1 text-amber/90">{progress > 0.58 ? COMPANY_COORDINATES : '34.1526° N / 118.2437° W'}</div>
         </div>
         <div className="text-right">
           <div className="mb-2 text-white/30">Scroll to trace</div>

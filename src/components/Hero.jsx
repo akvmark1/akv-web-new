@@ -43,6 +43,10 @@ export default function Hero() {
       <div className="absolute top-1/3 -left-40 w-96 h-96 bg-accentgreen/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
+      <div className="absolute inset-0 z-[1] opacity-75" aria-hidden="true">
+        <Drone3DCanvas progress={sceneProgress} className="md:translate-x-[18%]" />
+      </div>
+
       <div className="max-w-[1240px] w-full mx-auto px-6 md:px-10 relative z-10 my-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Headlines & Actions */}
@@ -95,10 +99,6 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right Column: scroll-driven orbital intelligence visual */}
-          <div className="lg:col-span-5 h-[400px] md:h-[480px] lg:h-[540px] relative flex items-center justify-center">
-            <Drone3DCanvas progress={sceneProgress} />
-          </div>
         </div>
       </div>
 

@@ -44,7 +44,11 @@ export default function Hero() {
       <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
       <div className="absolute inset-0 z-[1] opacity-75" aria-hidden="true">
-        <Drone3DCanvas progress={sceneProgress} className="md:translate-x-[18%]" />
+        <Drone3DCanvas
+          progress={sceneProgress}
+          className="md:translate-x-[18%]"
+          showMap={false}
+        />
       </div>
 
       <div className="max-w-[1240px] w-full mx-auto px-6 md:px-10 relative z-10 my-auto">

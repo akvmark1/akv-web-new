@@ -1,28 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { Target, Award, Users, ChevronRight } from 'lucide-react';
-import { IndiaMapOverlay } from './Drone3DCanvas';
+import { IndiaMapPanel } from './Drone3DCanvas';
 
 export default function About() {
   const aboutRef = useRef(null);
-  const [locationProgress, setLocationProgress] = useState(0);
-
-  useEffect(() => {
-    const updateLocationProgress = () => {
-      if (!aboutRef.current) return;
-
-      const { top, height } = aboutRef.current.getBoundingClientRect();
-      const progress = (window.innerHeight - top) / Math.max(window.innerHeight * 0.72, height * 0.35);
-      setLocationProgress(Math.min(1, Math.max(0, progress)));
-    };
-
-    window.addEventListener('scroll', updateLocationProgress, { passive: true });
-    window.addEventListener('resize', updateLocationProgress);
-
-    return () => {
-      window.removeEventListener('scroll', updateLocationProgress);
-      window.removeEventListener('resize', updateLocationProgress);
-    };
-  }, []);
 
   const team = [
     {
@@ -74,7 +55,7 @@ export default function About() {
           <div className="lg:col-span-7 max-w-2xl lg:pt-4">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
               <span className="w-1.5 h-1.5 bg-amber rounded-full" />
-              <span>About Us</span>
+              <span>04 &middot; Institutional Backing &amp; Leadership</span>
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
               Deep-tech, built for missions that can't afford to fail.
@@ -85,10 +66,10 @@ export default function About() {
             </p>
           </div>
 
-          <div className="lg:col-span-5 w-full max-w-[460px] justify-self-end">
-            <div className="h-[250px] sm:h-[275px] lg:h-[300px] relative bg-navy-2/55 overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(242,169,59,0.11),transparent_58%)]" />
-              <IndiaMapOverlay progress={locationProgress} compact />
+          <div className="lg:col-span-5 w-full max-w-[480px] justify-self-end">
+            <div className="h-[340px] sm:h-[380px] lg:h-[440px] relative bg-[#06101a]/80 overflow-hidden border border-white/5 rounded-sm shadow-[inset_0_0_40px_rgba(242,169,59,0.04)]">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_55%_48%,rgba(242,169,59,0.07),transparent_65%)]" />
+              <IndiaMapPanel />
             </div>
           </div>
         </div>

@@ -2,27 +2,111 @@ import React, { useState } from 'react';
 import { Phone, Mail, MapPin, Globe, Send, CheckCircle2 } from 'lucide-react';
 
 export default function Contact() {
+  // Configured via .env or fallback for deployed production builds
+  const GOOGLE_SHEETS_URL =
+    import.meta.env.VITE_GOOGLE_SHEETS_URL ||
+    'https://script.google.com/macros/s/AKfycbxooqyeKHpaK32iO8NVBufrD82eyKz6FlhFLwMLDBOMYY-A_ZbxEwjXUSRt9L6rqOuh/exec';
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     organization: '',
     message: '',
   });
+  // Honeypot field for bot detection (invisible to real users)
+  const [botField, setBotField] = useState('');
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  // Sanitizes text to prevent CSV/Spreadsheet Formula Injection (=, +, -, @)
+  const sanitizeForSheet = (str) => {
+    if (!str) return '';
+    const trimmed = str.trim();
+    // Prefix single quote if string starts with formula trigger characters
+    if (/^[=+\-@\t\r]/.test(trimmed)) {
+      return `'${trimmed}`;
+    }
+    return trimmed;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Open default mailto with formatted fields as in original site
-    const subject = encodeURIComponent(`Mission Inquiry from ${formData.name}`);
-    const body = encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\nOrganization: ${formData.organization}\n\nMessage:\n${formData.message}`
-    );
-    window.location.href = `mailto:hello@akashvahini.in?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    setError('');
+
+    // 1. Bot check: If the hidden honeypot was filled, quietly drop the submission
+    if (botField) {
+      setSubmitted(true);
+      return;
+    }
+
+    // 2. Client-side Rate Limiting (Prevent spam flooding)
+    const LAST_SUBMIT_KEY = 'akv_contact_cooldown';
+    const lastSubmitTime = localStorage.getItem(LAST_SUBMIT_KEY);
+    const now = Date.now();
+    if (lastSubmitTime && now - parseInt(lastSubmitTime, 10) < 30000) {
+      const waitSeconds = Math.ceil((30000 - (now - parseInt(lastSubmitTime, 10))) / 1000);
+      setError(`Please wait ${waitSeconds}s before submitting another inquiry.`);
+      return;
+    }
+
+    // 3. Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setError('Please provide a valid email address.');
+      return;
+    }
+
+    // 4. Sanitize inputs against Formula Injection & enforce character boundaries
+    const safeData = {
+      name: sanitizeForSheet(formData.name).slice(0, 100),
+      email: formData.email.trim().slice(0, 120),
+      organization: sanitizeForSheet(formData.organization).slice(0, 120),
+      message: sanitizeForSheet(formData.message).slice(0, 2000),
+    };
+
+    setLoading(true);
+
+    if (GOOGLE_SHEETS_URL) {
+      try {
+        const payload = new FormData();
+        payload.append('name', safeData.name);
+        payload.append('email', safeData.email);
+        payload.append('organization', safeData.organization);
+        payload.append('message', safeData.message);
+        payload.append('bot', botField);
+        payload.append('timestamp', new Date().toISOString());
+
+        // Using mode: 'no-cors' avoids browser CORS restrictions with Google Apps Script
+        await fetch(GOOGLE_SHEETS_URL, {
+          method: 'POST',
+          body: payload,
+          mode: 'no-cors',
+        });
+
+        localStorage.setItem(LAST_SUBMIT_KEY, Date.now().toString());
+        setSubmitted(true);
+        setFormData({ name: '', email: '', organization: '', message: '' });
+      } catch (err) {
+        console.error('Error submitting form:', err);
+        setError('Failed to send inquiry. Please try again or email directly.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Fallback: If URL not configured yet, open mailto client
+      const subject = encodeURIComponent(`Mission Inquiry from ${safeData.name}`);
+      const body = encodeURIComponent(
+        `Name: ${safeData.name}\nEmail: ${safeData.email}\nOrganization: ${safeData.organization}\n\nMessage:\n${safeData.message}`
+      );
+      window.location.href = `mailto:hello@akashvahini.in?subject=${subject}&body=${body}`;
+      setSubmitted(true);
+      setLoading(false);
+    }
   };
 
   return (
-    <section id="contact" className="py-24 bg-navy relative border-t border-white/10">
+    <section id="contact" className="py-24 bg-navy-2 relative border-t border-white/10">
       {/* Background ambient light */}
       <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-amber/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -33,7 +117,7 @@ export default function Contact() {
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
                 <span className="w-1.5 h-1.5 bg-amber rounded-full" />
-                <span>Get in Touch</span>
+                <span>05 &middot; Commercial Engagement &amp; Field Trials</span>
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-6">
                 Ready to see SEERIA in the field?
@@ -103,11 +187,37 @@ export default function Contact() {
               {submitted && (
                 <div className="mb-6 p-4 rounded bg-accentgreen/10 border border-accentgreen/30 text-accentgreen flex items-center gap-3 text-sm">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <span>Opening your email client to send your message to hello@akashvahini.in</span>
+                  <span>
+                    {GOOGLE_SHEETS_URL
+                      ? 'Thank you! Your mission inquiry has been saved. Our team will contact you shortly.'
+                      : 'Opening your email client to send your message to hello@akashvahini.in'}
+                  </span>
+                </div>
+              )}
+
+              {error && (
+                <div className="mb-6 p-4 rounded bg-red-500/10 border border-red-500/30 text-red-400 flex items-center gap-3 text-sm">
+                  <span>{error}</span>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Anti-Bot Honeypot: Hidden from real users, traps scrapers & spam bots */}
+                <div
+                  className="opacity-0 absolute -left-[9999px] h-0 w-0 overflow-hidden pointer-events-none"
+                  aria-hidden="true"
+                >
+                  <label htmlFor="company_website">Do not fill this</label>
+                  <input
+                    id="company_website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={botField}
+                    onChange={(e) => setBotField(e.target.value)}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-mono text-white/70 mb-2 uppercase">
@@ -116,6 +226,7 @@ export default function Contact() {
                     <input
                       type="text"
                       required
+                      maxLength={100}
                       placeholder="e.g. Vikram Sharma"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -129,6 +240,7 @@ export default function Contact() {
                     <input
                       type="email"
                       required
+                      maxLength={120}
                       placeholder="vikram@organization.in"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -143,6 +255,7 @@ export default function Contact() {
                   </label>
                   <input
                     type="text"
+                    maxLength={120}
                     placeholder="e.g. State Disaster Management / Power Grid Corp"
                     value={formData.organization}
                     onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
@@ -157,6 +270,7 @@ export default function Contact() {
                   <textarea
                     rows={4}
                     required
+                    maxLength={2000}
                     placeholder="Describe your payload, operating environment, range, or required inspection timeline..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -166,10 +280,20 @@ export default function Contact() {
 
                 <button
                   type="submit"
-                  className="w-full py-4 bg-amber text-navy font-bold text-sm rounded-sm hover:bg-amber-glow transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 shadow-lg shadow-amber/20"
+                  disabled={loading}
+                  className="w-full py-4 bg-amber text-navy font-bold text-sm rounded-sm hover:bg-amber-glow transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 shadow-lg shadow-amber/20 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Send className="w-4 h-4" />
-                  <span>Send mission inquiry</span>
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+                      <span>Transmitting inquiry...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Send mission inquiry</span>
+                    </>
+                  )}
                 </button>
               </form>
 

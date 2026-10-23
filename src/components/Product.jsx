@@ -65,7 +65,7 @@ export default function Product() {
         <div className="max-w-3xl mb-16">
           <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
             <span className="w-1.5 h-1.5 bg-amber rounded-full" />
-            <span>Our Product &mdash; SEERIA</span>
+            <span>01 &middot; Flagship Platform &mdash; SEERIA</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
             A heavy-lift hybrid drone, built around perception.

@@ -88,7 +88,7 @@ export default function Applications() {
         <div className="max-w-2xl mb-16">
           <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
             <span className="w-1.5 h-1.5 bg-amber rounded-full" />
-            <span>Applications</span>
+            <span>03 &middot; Commercial Verticals &amp; Deployments</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
             Built for the missions that matter most.

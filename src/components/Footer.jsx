@@ -1,10 +1,6 @@
 import React from 'react';
-import { ArrowUp } from 'lucide-react';
 
 export default function Footer() {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   return (
     <footer className="bg-navy border-t border-white/10 pt-16 pb-12 text-white">
@@ -62,11 +58,11 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <h4 className="text-xs font-mono text-amber uppercase tracking-wider mb-4">Navigate</h4>
             <div className="flex flex-col space-y-2 text-xs text-white/70">
-              <a href="#about" className="hover:text-amber transition-colors">About Us</a>
               <a href="#product" className="hover:text-amber transition-colors">SEERIA Drone</a>
-              <a href="#technology" className="hover:text-amber transition-colors">Technology</a>
+              <a href="#technology" className="hover:text-amber transition-colors">Technology & GCS</a>
               <a href="#applications" className="hover:text-amber transition-colors">Applications</a>
-              <a href="#contact" className="hover:text-amber transition-colors">Contact</a>
+              <a href="#about" className="hover:text-amber transition-colors">Company & Leadership</a>
+              <a href="#contact" className="hover:text-amber transition-colors">Book a Call</a>
             </div>
           </div>
         </div>
@@ -78,14 +74,6 @@ export default function Footer() {
           </div>
           <div className="flex items-center gap-6">
             <span className="text-amber">Made for the sky.</span>
-            <button
-              onClick={scrollToTop}
-              className="p-2 rounded bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors flex items-center gap-1.5"
-              aria-label="Scroll to top"
-            >
-              <span>TOP</span>
-              <ArrowUp className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>

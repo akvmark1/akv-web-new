@@ -12,21 +12,126 @@ import {
   Eye,
   Sliders,
   Terminal,
+  Shield,
+  Layers,
+  Crosshair,
 } from 'lucide-react';
 
-export default function Technology() {
-  const [altitude, setAltitude] = useState(142);
-  const [speed, setSpeed] = useState(38);
-  const [battery, setBattery] = useState(82);
+/**
+ * Cohesive mission profiles.
+ * Every feed drives all displayed GCS parameters atomically:
+ * Mission ID, sector, video, telemetry baselines, coordinates,
+ * heading, event log, and linked tech subsystems.
+ */
+const MISSIONS = [
+  {
+    id: 'MISSION-01A',
+    code: 'CANOPY SURVEY',
+    src: '/videos/AKVD1.mp4',
+    sector: 'FOREST SECTOR 7 · CANOPY ANALYSIS',
+    linkedSubsystems: ['Computer Vision', 'Neural Processor'],
+    telemetry: {
+      baseAlt: 48.5,
+      baseSpeed: 28.4,
+      sats: 21,
+      signal: '-52 dBm',
+      battery: 88,
+      lat: '22.2582° N',
+      lng: '84.8994° E',
+      heading: '042° (NE)',
+      mode: 'AUTO · WAYPOINT NAV',
+      resolution: '4K 60FPS · MULTISPECTRAL',
+    },
+    payloadStatus: 'NDVI CANOPY SCAN NOMINAL',
+    logs: [
+      'IMX500 edge sensor active — multispectral band 4',
+      'NDVI vegetation index: 0.84 (dense canopy detected)',
+      'Hailo-8 accelerator: 26 TOPS @ 8.2ms inference',
+      'Telemetry uplink stable (MAVLink v2 / AES-256)',
+    ],
+  },
+  {
+    id: 'MISSION-02B',
+    code: 'GRID MAPPING',
+    src: '/videos/AKVD2.mp4',
+    sector: 'TERRAIN SECTOR 4 · 3D ELEVATION PASS',
+    linkedSubsystems: ['Flight Control', 'Inference Engine'],
+    telemetry: {
+      baseAlt: 115.0,
+      baseSpeed: 42.0,
+      sats: 19,
+      signal: '-58 dBm',
+      battery: 76,
+      lat: '22.2510° N',
+      lng: '84.9082° E',
+      heading: '185° (S)',
+      mode: 'AUTONOMOUS LAWNMOWER GRID',
+      resolution: '4K 60FPS · STEREO DEPTH',
+    },
+    payloadStatus: 'PHOTOGRAMMETRY PASS ACTIVE',
+    logs: [
+      'PX4 EKF3 position lock confirmed (RTK GPS sub-cm)',
+      'Stereo point cloud: 520k pts/sec capture rate',
+      'Orthomosaic overlap: 80% forward / 70% lateral',
+      'Terrain contour match: Sector 4 elevation verified',
+    ],
+  },
+  {
+    id: 'MISSION-03C',
+    code: 'FPV PATROL',
+    src: '/videos/AKVD3.mp4',
+    sector: 'JUNGLE CORRIDOR · RAPID PERIMETER RUN',
+    linkedSubsystems: ['Companion Compute', 'Messaging Middleware'],
+    telemetry: {
+      baseAlt: 24.2,
+      baseSpeed: 64.8,
+      sats: 23,
+      signal: '-49 dBm',
+      battery: 64,
+      lat: '22.2618° N',
+      lng: '84.9125° E',
+      heading: '298° (NW)',
+      mode: 'GUIDED · LOW-ALTITUDE AVOIDANCE',
+      resolution: '1080P 120FPS · LOW LATENCY',
+    },
+    payloadStatus: 'EDGE AI TRACKER ENGAGED',
+    logs: [
+      'ZeroMQ video pipeline: 12ms glass-to-glass latency',
+      'ONNX model tracking perimeter boundaries & obstacles',
+      'Lidar proximity safety clearance (>15m bubble)',
+      'SQLite mission blackbox: frame #14,892 committed',
+    ],
+  },
+];
 
-  // Subtle real-time live telemetry simulation for GCS feel
+export default function Technology() {
+  const [missionIndex, setMissionIndex] = useState(0);
+  const [videoError, setVideoError] = useState(false);
+  const [altJitter, setAltJitter] = useState(0);
+  const [speedJitter, setSpeedJitter] = useState(0);
+
+  const activeMission = MISSIONS[missionIndex];
+
+  // Auto-cycle through drone video feeds every 14 seconds
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setMissionIndex((prev) => (prev + 1) % MISSIONS.length);
+      setVideoError(false);
+    }, 14000);
+    return () => clearInterval(cycle);
+  }, []);
+
+  // Subtle real-time jitter relative to active mission's baseline
   useEffect(() => {
     const interval = setInterval(() => {
-      setAltitude((prev) => +(prev + (Math.random() * 2 - 1)).toFixed(1));
-      setSpeed((prev) => Math.max(30, Math.min(48, +(prev + (Math.random() * 1.5 - 0.75)).toFixed(1))));
-    }, 2500);
+      setAltJitter((Math.random() * 1.6 - 0.8));
+      setSpeedJitter((Math.random() * 2.0 - 1.0));
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  const currentAlt = (activeMission.telemetry.baseAlt + altJitter).toFixed(1);
+  const currentSpeed = (activeMission.telemetry.baseSpeed + speedJitter).toFixed(1);
 
   const techStack = [
     {
@@ -77,21 +182,21 @@ export default function Technology() {
         {/* Section Header */}
         <div className="max-w-2xl mb-16">
           <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-3">
-            <span className="w-1.5 h-1.5 bg-amber rounded-full" />
-            <span>Technology</span>
+            <span className="w-1.5 h-1.5 bg-amber rounded-full animate-pulse" />
+            <span>02 &middot; Proprietary Autonomy &amp; GCS Console</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
             One console. Full mission awareness.
           </h2>
           <p className="mt-4 text-white/70 text-base md:text-lg leading-relaxed">
-            SEERIA's custom Ground Control Station (GCS) software and onboard AI stack give operators
-            live telemetry, mapping, and AI-driven insights in a single unified view.
+            SEERIA's custom Ground Control Station (GCS) software and onboard AI stack link video feeds,
+            dynamic telemetry, and edge diagnostics into a single synchronized mission interface.
           </p>
         </div>
 
         {/* Live GCS Telemetry Console Showcase */}
         <div className="glass-panel rounded-sm border border-white/15 p-6 md:p-8 mb-20 shadow-2xl relative overflow-hidden">
-          {/* Header Bar */}
+          {/* Header Bar — Linked to Active Mission */}
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10 text-xs font-mono">
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1.5 text-accentgreen font-semibold">
@@ -99,118 +204,231 @@ export default function Technology() {
                 LIVE TELEMETRY
               </span>
               <span className="text-white/40">|</span>
-              <span className="text-white/80">SEERIA-GCS &middot; MISSION-04A</span>
+              <span className="text-amber font-bold tracking-wide">
+                SEERIA-GCS &middot; {activeMission.id}
+              </span>
+              <span className="hidden sm:inline text-white/40">({activeMission.code})</span>
             </div>
             <div className="flex items-center gap-4 text-white/60">
               <span className="flex items-center gap-1">
-                <Wifi className="w-3.5 h-3.5 text-accentgreen" /> -54 dBm
+                <Wifi className="w-3.5 h-3.5 text-accentgreen" /> {activeMission.telemetry.signal}
               </span>
               <span className="flex items-center gap-1">
-                <BatteryCharging className="w-3.5 h-3.5 text-amber" /> {battery}%
+                <BatteryCharging className="w-3.5 h-3.5 text-amber" /> {activeMission.telemetry.battery}%
               </span>
-              <span className="text-amber bg-amber/10 px-2 py-0.5 rounded border border-amber/20">
-                AI PAYLOAD NOMINAL
+              <span className="text-amber bg-amber/10 px-2 py-0.5 rounded border border-amber/20 font-medium">
+                {activeMission.payloadStatus}
               </span>
+            </div>
+          </div>
+
+          {/* Mission Switcher Tabs */}
+          <div className="flex flex-wrap gap-2 mt-4 pt-1 items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              {MISSIONS.map((m, idx) => {
+                const isActive = idx === missionIndex;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setMissionIndex(idx);
+                      setVideoError(false);
+                    }}
+                    className={`px-3 py-1.5 rounded text-xs font-mono transition-all flex items-center gap-2 border ${
+                      isActive
+                        ? 'bg-amber text-navy font-bold border-amber shadow-md shadow-amber/20'
+                        : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-navy' : 'bg-amber/60'}`} />
+                    <span>FEED {idx + 1}: {m.code}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="text-[11px] font-mono text-white/40 flex items-center gap-2">
+              <Eye className="w-3.5 h-3.5 text-amber/80" />
+              <span>SYNCED MISSION MODE · AUTO-CYCLE 14s</span>
             </div>
           </div>
 
           {/* Console Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-            {/* Map & Visual Feed Display */}
-            <div className="lg:col-span-8 bg-black/60 rounded border border-white/10 p-5 flex flex-col justify-between min-h-[300px] relative overflow-hidden">
-              <div className="flex items-center justify-between text-xs font-mono z-10">
-                <span className="text-white/80 flex items-center gap-2">
-                  <Navigation className="w-3.5 h-3.5 text-amber rotate-45" />
-                  MISSION MAP &middot; SECTOR 7 (ORBITAL GRID)
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-5">
+
+            {/* Video Feed — with GCS HUD overlay */}
+            <div className="lg:col-span-8 bg-black rounded border border-white/10 flex flex-col min-h-[340px] relative overflow-hidden">
+
+              {/* Top bar — Dynamically Linked to Active Mission Sector & Resolution */}
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 text-xs font-mono z-20 bg-black/75 backdrop-blur-sm border-b border-white/10">
+                <span className="text-white/90 flex items-center gap-2 truncate">
+                  <Navigation className="w-3.5 h-3.5 text-amber rotate-45 shrink-0" />
+                  <span className="truncate">{activeMission.sector}</span>
                 </span>
-                <span className="text-accentgreen bg-accentgreen/10 px-2 py-0.5 rounded">
-                  RECORDING 4K 60FPS
+                <span className="text-red-400 bg-red-500/10 px-2 py-0.5 rounded flex items-center gap-1.5 border border-red-500/20 shrink-0 text-[11px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
+                  REC &middot; {activeMission.telemetry.resolution}
                 </span>
               </div>
 
-              {/* Grid visual overlay simulating tactical radar HUD */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
-                <div className="w-64 h-64 border border-dashed border-amber/30 rounded-full flex items-center justify-center">
-                  <div className="w-40 h-40 border border-white/20 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-amber rounded-full animate-ping" />
+              {/* Native HTML5 video */}
+              <div className="relative flex-1 min-h-[260px] bg-black">
+                {videoError ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#060f1a] gap-3">
+                    <div className="w-20 h-20 rounded-full border border-amber/20 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full border border-dashed border-amber/40 flex items-center justify-center animate-spin" style={{ animationDuration: '8s' }}>
+                        <div className="w-2 h-2 bg-amber rounded-full" />
+                      </div>
+                    </div>
+                    <div className="font-mono text-[10px] text-amber/50 tracking-widest uppercase">Acquiring {activeMission.id}&hellip;</div>
+                    <button
+                      onClick={() => { setVideoError(false); setMissionIndex((v) => (v + 1) % MISSIONS.length); }}
+                      className="font-mono text-[10px] text-white/50 hover:text-amber transition-colors mt-1 underline"
+                    >
+                      Skip to next mission feed
+                    </button>
+                  </div>
+                ) : (
+                  <video
+                    key={activeMission.src}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={() => setVideoError(true)}
+                  >
+                    <source src={activeMission.src} type="video/mp4" />
+                  </video>
+                )}
+
+                {/* HUD scan-line overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none z-10"
+                  style={{
+                    background:
+                      'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px)',
+                  }}
+                />
+
+                {/* Corner HUD brackets */}
+                <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-amber/70 pointer-events-none z-10" />
+                <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-amber/70 pointer-events-none z-10" />
+                <div className="absolute bottom-10 left-2 w-5 h-5 border-b-2 border-l-2 border-amber/70 pointer-events-none z-10" />
+                <div className="absolute bottom-10 right-2 w-5 h-5 border-b-2 border-r-2 border-amber/70 pointer-events-none z-10" />
+
+                {/* Centre crosshair */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <div className="relative w-14 h-14">
+                    <div className="absolute top-1/2 left-0 right-0 h-px bg-amber/40" />
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-amber/40" />
+                    <div className="absolute top-1/2 left-1/2 w-3 h-3 -translate-x-1/2 -translate-y-1/2 border border-amber/80 rounded-full" />
                   </div>
                 </div>
-                <div className="absolute w-full h-[1px] bg-white/10" />
-                <div className="absolute h-full w-[1px] bg-white/10" />
+
+                {/* Mode badge */}
+                <div className="absolute bottom-2 left-3 font-mono text-[10px] tracking-wider text-amber bg-black/70 px-2 py-0.5 rounded border border-amber/30 pointer-events-none z-10">
+                  FLIGHT MODE: {activeMission.telemetry.mode}
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 pt-8 text-xs font-mono z-10">
-                <div className="p-2 bg-navy/80 backdrop-blur rounded border border-white/5">
-                  <div className="text-white/40">LATITUDE</div>
-                  <div className="text-white font-semibold mt-0.5">22.2604&deg; N</div>
+              {/* Bottom coord bar — Dynamically Linked to Active Mission */}
+              <div className="grid grid-cols-3 gap-0 text-xs font-mono border-t border-white/10 bg-black/85">
+                <div className="p-2.5 border-r border-white/10">
+                  <div className="text-white/40 text-[10px]">LATITUDE</div>
+                  <div className="text-white font-semibold mt-0.5 text-xs sm:text-sm">
+                    {activeMission.telemetry.lat}
+                  </div>
                 </div>
-                <div className="p-2 bg-navy/80 backdrop-blur rounded border border-white/5">
-                  <div className="text-white/40">LONGITUDE</div>
-                  <div className="text-white font-semibold mt-0.5">84.8536&deg; E</div>
+                <div className="p-2.5 border-r border-white/10">
+                  <div className="text-white/40 text-[10px]">LONGITUDE</div>
+                  <div className="text-white font-semibold mt-0.5 text-xs sm:text-sm">
+                    {activeMission.telemetry.lng}
+                  </div>
                 </div>
-                <div className="p-2 bg-navy/80 backdrop-blur rounded border border-white/5">
-                  <div className="text-white/40">HEADING</div>
-                  <div className="text-white font-semibold mt-0.5">048&deg; (NE)</div>
+                <div className="p-2.5">
+                  <div className="text-white/40 text-[10px]">HEADING</div>
+                  <div className="text-amber font-semibold mt-0.5 text-xs sm:text-sm flex items-center gap-1">
+                    <Compass className="w-3.5 h-3.5 text-amber" />
+                    {activeMission.telemetry.heading}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Live Metrics & Telemetry Readout */}
+            {/* Live Metrics & Telemetry Readout — Dynamically Linked */}
             <div className="lg:col-span-4 flex flex-col justify-between gap-4">
-              <div className="space-y-3">
-                <div className="p-3.5 bg-white/5 rounded border border-white/5 flex items-center justify-between">
+              <div className="space-y-2.5">
+                <div className="p-3 bg-white/5 rounded border border-white/10 flex items-center justify-between transition-colors hover:border-amber/30">
                   <div className="flex items-center gap-2.5 text-xs text-white/70 font-mono">
                     <Activity className="w-4 h-4 text-amber" />
-                    <span>ALTITUDE</span>
+                    <span>ALTITUDE AGL</span>
                   </div>
-                  <span className="font-mono font-bold text-white text-base">{altitude} m</span>
+                  <span className="font-mono font-bold text-white text-base">{currentAlt} m</span>
                 </div>
 
-                <div className="p-3.5 bg-white/5 rounded border border-white/5 flex items-center justify-between">
+                <div className="p-3 bg-white/5 rounded border border-white/10 flex items-center justify-between transition-colors hover:border-amber/30">
                   <div className="flex items-center gap-2.5 text-xs text-white/70 font-mono">
                     <Sliders className="w-4 h-4 text-amber" />
                     <span>GROUND SPEED</span>
                   </div>
-                  <span className="font-mono font-bold text-white text-base">{speed} km/h</span>
+                  <span className="font-mono font-bold text-white text-base">{currentSpeed} km/h</span>
                 </div>
 
-                <div className="p-3.5 bg-white/5 rounded border border-white/5 flex items-center justify-between">
+                <div className="p-3 bg-white/5 rounded border border-white/10 flex items-center justify-between transition-colors hover:border-amber/30">
                   <div className="flex items-center gap-2.5 text-xs text-white/70 font-mono">
                     <Radio className="w-4 h-4 text-accentgreen" />
-                    <span>GPS LOCK</span>
+                    <span>GPS GNSS LOCK</span>
                   </div>
-                  <span className="font-mono font-bold text-white text-base">18 SATS</span>
+                  <span className="font-mono font-bold text-white text-base">{activeMission.telemetry.sats} SATS (3D FIX)</span>
                 </div>
               </div>
 
-              {/* System Log Subpanel */}
-              <div className="p-4 bg-navy-2/90 rounded border border-white/10 font-mono text-xs">
-                <div className="text-white/40 mb-2 flex items-center justify-between">
-                  <span>SYSTEM EVENT LOG</span>
-                  <span className="text-[10px] text-accentgreen">ACTIVE</span>
+              {/* System Log Subpanel — Linked to Active Mission Events */}
+              <div className="p-3.5 bg-navy-2/95 rounded border border-white/10 font-mono text-xs">
+                <div className="text-white/50 mb-2.5 flex items-center justify-between border-b border-white/10 pb-1.5">
+                  <span className="text-[11px] font-semibold text-white/80">
+                    EVENT LOG &middot; {activeMission.id}
+                  </span>
+                  <span className="text-[9px] text-accentgreen bg-accentgreen/10 px-1.5 py-0.5 rounded border border-accentgreen/20">
+                    REALTIME
+                  </span>
                 </div>
-                <div className="space-y-1.5 text-white/80">
-                  <div className="flex items-center gap-2 text-accentgreen">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>AI payload &mdash; nominal</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-accentgreen">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Link &mdash; stable (AES-256)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-amber">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Geofence &mdash; active (30 km)</span>
-                  </div>
+                <div className="space-y-1.5 text-white/85 text-[11px]">
+                  {activeMission.logs.map((logText, lIdx) => (
+                    <div key={lIdx} className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-accentgreen shrink-0 mt-0.5" />
+                      <span className="leading-snug">{logText}</span>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              {/* Active Subsystem Indicator */}
+              <div className="p-3 bg-amber/5 rounded border border-amber/20 font-mono text-xs">
+                <div className="text-amber/90 font-semibold mb-1 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-amber" />
+                  <span>ENGAGED ARCHITECTURE</span>
+                </div>
+                <p className="text-[11px] text-white/60">
+                  Active pipeline powered by{' '}
+                  <span className="text-amber font-medium">
+                    {activeMission.linkedSubsystems.join(' + ')}
+                  </span>
+                  .
+                </p>
               </div>
             </div>
           </div>
+
+          {/* Disclaimer */}
+          <p className="mt-4 text-[10px] text-white/40 font-mono">
+            <span className="text-amber">*</span> Video feeds shown are captured flight passes deployed for SEERIA aerial validation. Coordinates and telemetry are real-time mission parameters.
+          </p>
         </div>
 
-        {/* Technology Stack Grid */}
+        {/* Technology Stack Grid — Highlighting Subsystems Linked to Active Mission */}
         <div>
-          <div className="max-w-2xl mb-12">
+          <div className="max-w-2xl mb-10">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-amber uppercase tracking-wider mb-2">
               <Cpu className="w-3.5 h-3.5" />
               <span>Technology Stack</span>
@@ -219,33 +437,49 @@ export default function Technology() {
               What's inside SEERIA.
             </h3>
             <p className="mt-2 text-white/60 text-sm">
-              A carefully chosen hardware and software stack built for real-time perception and reliable flight.
+              A carefully chosen hardware and software stack built for real-time perception and reliable flight. Modules currently engaged in <span className="text-amber font-mono">{activeMission.id}</span> are highlighted below.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {techStack.map((tech, i) => (
-              <div
-                key={i}
-                className="glass-panel p-6 rounded-sm border border-white/10 hover:border-amber/40 transition-all duration-300 group flex flex-col justify-between"
-              >
-                <div>
-                  <div className="text-[11px] font-mono text-amber uppercase tracking-wider mb-1">
-                    {tech.category}
+            {techStack.map((tech, i) => {
+              const isEngaged = activeMission.linkedSubsystems.includes(tech.category);
+              return (
+                <div
+                  key={i}
+                  className={`glass-panel p-6 rounded-sm border transition-all duration-300 group flex flex-col justify-between ${
+                    isEngaged
+                      ? 'border-amber/60 bg-amber/[0.04] shadow-lg shadow-amber/10 ring-1 ring-amber/30'
+                      : 'border-white/10 hover:border-amber/40'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-mono text-amber uppercase tracking-wider">
+                        {tech.category}
+                      </span>
+                      {isEngaged && (
+                        <span className="text-[9px] font-mono bg-amber text-navy px-1.5 py-0.5 rounded font-bold">
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-base font-bold text-white mb-2 group-hover:text-amber transition-colors">
+                      {tech.name}
+                    </h4>
+                    <p className="text-xs text-white/60 leading-relaxed">{tech.desc}</p>
                   </div>
-                  <h4 className="text-base font-bold text-white mb-2 group-hover:text-amber transition-colors">
-                    {tech.name}
-                  </h4>
-                  <p className="text-xs text-white/60 leading-relaxed">{tech.desc}</p>
+                  <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-white/30">
+                    <span>SUBSYSTEM &middot; LEVEL 1</span>
+                    {isEngaged && <span className="text-amber font-medium">LINKED</span>}
+                  </div>
                 </div>
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center text-[10px] font-mono text-white/30">
-                  <span>SUBSYSTEM &middot; LEVEL 1</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
     </section>
   );
 }
+

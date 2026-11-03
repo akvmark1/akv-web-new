@@ -172,7 +172,7 @@ export default function Contact() {
 
             <div className="pt-8 mt-8 border-t border-white/10 flex items-center gap-2 text-xs font-mono text-white/40">
               <Globe className="w-4 h-4 text-amber" />
-              <span>OFFICIAL DOMAIN: WWW.AKASHVAHINI.IN</span>
+              <span>OFFICIAL DOMAIN: WWW.AKASHVAHINI.COM</span>
             </div>
           </div>
 

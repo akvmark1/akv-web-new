@@ -37,7 +37,7 @@ export default function Footer() {
                 </a>
               </div>
               <div>
-                <span className="text-white/40">www.akashvahini.in</span>
+                <span className="text-white/40">www.akashvahini.com</span>
               </div>
             </div>
           </div>

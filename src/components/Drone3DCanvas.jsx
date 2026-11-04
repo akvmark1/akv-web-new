@@ -808,56 +808,56 @@ export function IndiaMapPanel() {
                   <line
                     x1={target.x + 2}
                     y1={target.y - 6}
-                    x2={144}
-                    y2={46}
+                    x2={133}
+                    y2={49}
                     stroke="#f2a93b"
-                    strokeWidth="0.85"
-                    strokeDasharray="95"
-                    strokeDashoffset="95"
+                    strokeWidth="0.9"
+                    strokeDasharray="90"
+                    strokeDashoffset="90"
                     opacity="0.9"
                   >
                     <animate
                       attributeName="stroke-dashoffset"
-                      from="95"
+                      from="90"
                       to="0"
                       dur="0.6s"
                       fill="freeze"
                     />
                   </line>
                   {/* Origin connector dot at pin */}
-                  <circle cx={target.x + 2} cy={target.y - 6} r="1.3" fill="#f2a93b">
+                  <circle cx={target.x + 2} cy={target.y - 6} r="1.4" fill="#f2a93b">
                     <animate attributeName="opacity" from="0" to="1" dur="0.2s" fill="freeze" />
                   </circle>
 
                   {/* Animated Horizontal Shelf Line (draws right after diagonal line reaches elbow) */}
                   <line
-                    x1={144}
-                    y1={46}
-                    x2={144}
-                    y2={46}
+                    x1={133}
+                    y1={49}
+                    x2={133}
+                    y2={49}
                     stroke="#f2a93b"
-                    strokeWidth="0.95"
+                    strokeWidth="1"
                     opacity="0.95"
                   >
                     <animate
                       attributeName="x2"
-                      from="144"
-                      to="216"
+                      from="133"
+                      to="217"
                       dur="0.4s"
                       begin="0.55s"
                       fill="freeze"
                     />
                   </line>
                   {/* Elbow connector dot */}
-                  <circle cx={144} cy={46} r="1.6" fill="#f2a93b" opacity="0">
+                  <circle cx={133} cy={49} r="1.8" fill="#f2a93b" opacity="0">
                     <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.55s" fill="freeze" />
                   </circle>
                   {/* Terminal tick on shelf */}
-                  <line x1={216} y1={43} x2={216} y2={46} stroke="#f2a93b" strokeWidth="0.95" opacity="0">
+                  <line x1={217} y1={45} x2={217} y2={49} stroke="#f2a93b" strokeWidth="1" opacity="0">
                     <animate attributeName="opacity" from="0" to="0.95" dur="0.2s" begin="0.95s" fill="freeze" />
                   </line>
 
-                  {/* Tactical Callout Box (Smoothly fades in as the shelf finishes drawing) */}
+                  {/* Enlarged Tactical Callout Box (Fades in right as the shelf completes) */}
                   <g opacity="0">
                     <animate
                       attributeName="opacity"
@@ -870,45 +870,45 @@ export function IndiaMapPanel() {
 
                     {/* Background panel */}
                     <rect
-                      x="142"
-                      y="14"
-                      width="74"
-                      height="31"
-                      rx="2"
+                      x="133"
+                      y="10"
+                      width="84"
+                      height="39"
+                      rx="2.5"
                       fill="#06101a"
-                      fillOpacity="0.92"
+                      fillOpacity="0.94"
                       stroke="#f2a93b"
-                      strokeWidth="0.6"
-                      strokeOpacity="0.75"
+                      strokeWidth="0.75"
+                      strokeOpacity="0.85"
                     />
 
                     {/* Corner accent brackets on callout box */}
-                    <path d="M 142 18 L 142 14 L 146 14" fill="none" stroke="#f2a93b" strokeWidth="0.8" opacity="0.9" />
-                    <path d="M 212 14 L 216 14 L 216 18" fill="none" stroke="#f2a93b" strokeWidth="0.8" opacity="0.9" />
+                    <path d="M 133 16 L 133 10 L 139 10" fill="none" stroke="#f2a93b" strokeWidth="1" opacity="0.95" />
+                    <path d="M 211 10 L 217 10 L 217 16" fill="none" stroke="#f2a93b" strokeWidth="1" opacity="0.95" />
 
                     {/* Live status pulsing green dot */}
-                    <circle cx="147" cy="20.5" r="1.1" fill="#22c55e">
-                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite" />
+                    <circle cx="139" cy="18" r="1.3" fill="#22c55e">
+                      <animate attributeName="opacity" values="0.35;1;0.35" dur="1.2s" repeatCount="indefinite" />
                     </circle>
 
-                    {/* Card Content directly connected to the line */}
+                    {/* Card Content — enlarged and crisp */}
                     <text
-                      x="151"
-                      y="21.5"
+                      x="143"
+                      y="19.2"
                       fill="#f2a93b"
-                      fontSize="3.4"
+                      fontSize="4.2"
                       fontFamily="monospace"
                       fontWeight="bold"
-                      letterSpacing="0.6"
+                      letterSpacing="0.8"
                     >
                       TARGET ACQUIRED
                     </text>
 
                     <text
-                      x="146.5"
-                      y="28.5"
+                      x="138"
+                      y="27.8"
                       fill="#ffffff"
-                      fontSize="5"
+                      fontSize="6.2"
                       fontFamily="monospace"
                       fontWeight="bold"
                     >
@@ -916,22 +916,22 @@ export function IndiaMapPanel() {
                     </text>
 
                     <text
-                      x="146.5"
-                      y="35"
-                      fill="rgba(255,255,255,0.75)"
-                      fontSize="3.6"
+                      x="138"
+                      y="35.5"
+                      fill="rgba(255,255,255,0.85)"
+                      fontSize="4.4"
                       fontFamily="monospace"
                     >
                       NIT Rourkela Campus
                     </text>
 
                     <text
-                      x="146.5"
-                      y="41"
+                      x="138"
+                      y="42.8"
                       fill="#7dd3fc"
-                      fontSize="3.3"
+                      fontSize="4.1"
                       fontFamily="monospace"
-                      fontWeight="500"
+                      fontWeight="600"
                     >
                       Odisha · 22.26°N 84.90°E
                     </text>

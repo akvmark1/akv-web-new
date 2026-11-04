@@ -66,30 +66,46 @@ function EarthScene({ progress }) {
     const p = smoothProgress.current;
     const handoff = THREE.MathUtils.smoothstep(p, 0.16, 0.68);
     const globeOpacity = 1 - THREE.MathUtils.smoothstep(p, 0.22, 0.62);
+    const isVisible = globeOpacity > 0.01;
 
     if (earthRef.current) {
-      // Rotation starts from India and gently rotates eastward
-      earthRef.current.rotation.y += delta * (0.05 + p * 0.08);
-      earthRef.current.rotation.x = THREE.MathUtils.lerp(
-        earthRef.current.rotation.x,
-        INDIA_ROT_X - handoff * 0.15,
-        0.04
-      );
-      earthRef.current.position.z = -handoff * 0.65;
-      earthRef.current.scale.setScalar(1 + handoff * 0.42);
+      earthRef.current.visible = isVisible;
+      if (isVisible) {
+        // Ambient subtle idle sway (±7°) keeping India directly in view at Hero
+        const idleWobble = Math.sin(state.clock.elapsedTime * 0.35) * 0.12;
+        // Rotation begins at India, turns with scroll, and smoothly returns to India whenever returning to Hero
+        const targetRotY = INDIA_ROT_Y + idleWobble + p * 1.35;
+        earthRef.current.rotation.y = THREE.MathUtils.damp(
+          earthRef.current.rotation.y,
+          targetRotY,
+          3.5,
+          delta
+        );
+        earthRef.current.rotation.x = THREE.MathUtils.damp(
+          earthRef.current.rotation.x,
+          INDIA_ROT_X - handoff * 0.15,
+          3.5,
+          delta
+        );
+        earthRef.current.position.z = -handoff * 0.65;
+        earthRef.current.scale.setScalar(1 + handoff * 0.42);
+      }
     }
 
-    if (earthMaterialRef.current) {
+    if (earthMaterialRef.current && isVisible) {
       earthMaterialRef.current.opacity = Math.max(globeOpacity, 0.02);
     }
 
-    if (cloudMaterialRef.current) {
+    if (cloudMaterialRef.current && isVisible) {
       cloudMaterialRef.current.opacity = Math.max(globeOpacity * 0.25, 0.02);
     }
 
     if (glowRef.current) {
-      glowRef.current.scale.setScalar(1 + handoff * 0.46);
-      glowRef.current.material.opacity = 0.12 * globeOpacity;
+      glowRef.current.visible = isVisible;
+      if (isVisible) {
+        glowRef.current.scale.setScalar(1 + handoff * 0.46);
+        glowRef.current.material.opacity = 0.12 * globeOpacity;
+      }
     }
 
     state.camera.position.lerp(
@@ -469,7 +485,6 @@ export function IndiaMapPanel() {
   const [cardLines, setCardLines] = useState({ tag: '', title: '', sub: '', coords: '' });
   const [typingStep, setTypingStep] = useState(0);
   const panelRef = useRef(null);
-  const hasAnimated = useRef(false);
   const mapId = useId().replace(/:/g, '');
 
   const target = projectMapPoint(84.903671, 22.255471);
@@ -490,23 +505,69 @@ export function IndiaMapPanel() {
     };
   }, []);
 
-  // Staggered entry animation on scroll intersection
+  // Performance optimization: Pre-compute and memoize state paths so typewriter re-renders don't re-parse polygons
+  const processedFeatures = useMemo(() => {
+    if (!mapData?.features) return [];
+    return mapData.features.map((feature) => {
+      const name = feature.properties?.NAME_1 ?? '';
+      return {
+        name,
+        d: geometryToPath(feature.geometry),
+        style: getStateStyle(name),
+        isOdisha: /odisha|orissa/i.test(name),
+      };
+    });
+  }, [mapData]);
+
+  // Staggered entry animation on scroll intersection (replays whenever scrolled into view)
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
 
+    const timers = [];
+    const intervals = [];
+
+    const safeTimeout = (fn, delay) => {
+      const id = setTimeout(fn, delay);
+      timers.push(id);
+      return id;
+    };
+
+    const safeInterval = (fn, delay) => {
+      const id = setInterval(fn, delay);
+      intervals.push(id);
+      return id;
+    };
+
+    const clearAll = () => {
+      timers.forEach(clearTimeout);
+      intervals.forEach(clearInterval);
+      timers.length = 0;
+      intervals.length = 0;
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting || hasAnimated.current) return;
-        hasAnimated.current = true;
+        if (!entry.isIntersecting) {
+          clearAll();
+          setPhase(0);
+          setCoordText('');
+          setCardLines({ tag: '', title: '', sub: '', coords: '' });
+          setTypingStep(0);
+          return;
+        }
 
+        // Replay full animation sequence whenever scrolled into view
+        clearAll();
         setPhase(1);
-        const t2 = setTimeout(() => setPhase(2), 350);
-        const t3 = setTimeout(() => setPhase(3), 700);
-        const t4 = setTimeout(() => setPhase(4), 1050);
-        const t5 = setTimeout(() => {
+
+        safeTimeout(() => setPhase(2), 350);
+        safeTimeout(() => setPhase(3), 700);
+        safeTimeout(() => setPhase(4), 1050);
+
+        safeTimeout(() => {
           let i = 0;
-          const tw = setInterval(() => {
+          const tw = safeInterval(() => {
             i += 1;
             setCoordText(FULL_COORD.slice(0, i));
             if (i >= FULL_COORD.length) clearInterval(tw);
@@ -514,31 +575,31 @@ export function IndiaMapPanel() {
         }, 1260);
 
         // Sequenced Typewriter for Callout Card Text
-        const tCard = setTimeout(() => {
+        safeTimeout(() => {
           setTypingStep(1);
           let i1 = 0;
-          const tw1 = setInterval(() => {
+          const tw1 = safeInterval(() => {
             i1 += 1;
             setCardLines((prev) => ({ ...prev, tag: CARD_DATA.tag.slice(0, i1) }));
             if (i1 >= CARD_DATA.tag.length) {
               clearInterval(tw1);
               setTypingStep(2);
               let i2 = 0;
-              const tw2 = setInterval(() => {
+              const tw2 = safeInterval(() => {
                 i2 += 1;
                 setCardLines((prev) => ({ ...prev, title: CARD_DATA.title.slice(0, i2) }));
                 if (i2 >= CARD_DATA.title.length) {
                   clearInterval(tw2);
                   setTypingStep(3);
                   let i3 = 0;
-                  const tw3 = setInterval(() => {
+                  const tw3 = safeInterval(() => {
                     i3 += 1;
                     setCardLines((prev) => ({ ...prev, sub: CARD_DATA.sub.slice(0, i3) }));
                     if (i3 >= CARD_DATA.sub.length) {
                       clearInterval(tw3);
                       setTypingStep(4);
                       let i4 = 0;
-                      const tw4 = setInterval(() => {
+                      const tw4 = safeInterval(() => {
                         i4 += 1;
                         setCardLines((prev) => ({ ...prev, coords: CARD_DATA.coords.slice(0, i4) }));
                         if (i4 >= CARD_DATA.coords.length) {
@@ -553,16 +614,18 @@ export function IndiaMapPanel() {
             }
           }, 22);
         }, 1500);
-        const t6 = setTimeout(() => setPhase(5), 1600);
-        const t7 = setTimeout(() => setPhase(6), 1950);
 
-        return () => [t2, t3, t4, t5, tCard, t6, t7].forEach(clearTimeout);
+        safeTimeout(() => setPhase(5), 1600);
+        safeTimeout(() => setPhase(6), 1950);
       },
-      { threshold: 0.22 }
+      { threshold: 0.18 }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      clearAll();
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -723,22 +786,19 @@ export function IndiaMapPanel() {
             </line>
           )}
 
-          {/* State paths — terrain-palette fills */}
-          {mapData?.features.map((feature) => {
-            const name = feature.properties?.NAME_1 ?? '';
-            const style = getStateStyle(name);
-            const isOdisha = /odisha|orissa/i.test(name);
-            const visible = isOdisha ? phase >= 3 : phase >= 2;
+          {/* State paths — terrain-palette fills (memoized for 60fps typewriter rendering) */}
+          {processedFeatures.map((item) => {
+            const visible = item.isOdisha ? phase >= 3 : phase >= 2;
             return (
               <path
-                key={name}
-                d={geometryToPath(feature.geometry)}
-                fill={visible ? style.fill : '#0a1825'}
-                fillOpacity={visible ? style.fillOpacity : 0.4}
-                stroke={style.stroke}
-                strokeWidth={style.strokeWidth}
+                key={item.name}
+                d={item.d}
+                fill={visible ? item.style.fill : '#0a1825'}
+                fillOpacity={visible ? item.style.fillOpacity : 0.4}
+                stroke={item.style.stroke}
+                strokeWidth={item.style.strokeWidth}
                 strokeLinejoin="round"
-                filter={style.glow && visible ? `url(#${mapId}-stateGlow)` : undefined}
+                filter={item.style.glow && visible ? `url(#${mapId}-stateGlow)` : undefined}
                 style={{ transition: 'fill 0.65s ease, fill-opacity 0.65s ease' }}
               />
             );
@@ -1024,7 +1084,6 @@ function FallbackScene({ progress }) {
           backgroundImage: "url('/textures/earth_atmos_2048.jpg')",
           backgroundSize: 'auto 100%',
           backgroundPosition: `${72 + progress * 34}% center`,
-          animation: 'globe-spin 24s linear infinite',
         }}
       >
         <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.33),transparent_18%),linear-gradient(120deg,transparent_50%,rgba(4,13,29,0.6))]" />

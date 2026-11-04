@@ -7,19 +7,31 @@ export default function Hero() {
   const [sceneProgress, setSceneProgress] = useState(0);
 
   useEffect(() => {
+    let ticking = false;
+
     const updateSceneProgress = () => {
       if (!heroRef.current) return;
 
       const { top, height } = heroRef.current.getBoundingClientRect();
       const progress = (window.innerHeight * 0.14 - top) / Math.max(height * 0.78, 1);
       setSceneProgress(Math.min(1, Math.max(0, progress)));
+      ticking = false;
     };
 
-    window.addEventListener('scroll', updateSceneProgress, { passive: true });
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateSceneProgress);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', updateSceneProgress);
 
+    updateSceneProgress();
+
     return () => {
-      window.removeEventListener('scroll', updateSceneProgress);
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', updateSceneProgress);
     };
   }, []);

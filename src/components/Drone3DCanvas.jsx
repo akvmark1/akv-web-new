@@ -156,6 +156,25 @@ const MAP_BOUNDS = {
   minLatitude: 6,
   maxLatitude: 37.5,
 };
+const MAP_GRATICULE_LATS = [
+  { lat: 10, label: '10°N' },
+  { lat: 15, label: '15°N' },
+  { lat: 20, label: '20°N' },
+  { lat: 25, label: '25°N' },
+  { lat: 30, label: '30°N' },
+  { lat: 35, label: '35°N' },
+];
+
+const MAP_GRATICULE_LONS = [
+  { lon: 72, label: '72°E' },
+  { lon: 76, label: '76°E' },
+  { lon: 80, label: '80°E' },
+  { lon: 84, label: '84°E' },
+  { lon: 88, label: '88°E' },
+  { lon: 92, label: '92°E' },
+  { lon: 96, label: '96°E' },
+];
+
 
 function projectMapPoint(longitude, latitude) {
   return {
@@ -339,7 +358,44 @@ export function IndiaMapOverlay({ progress, compact = false }) {
           <circle cx={target.x} cy={target.y} r="2"   fill="#fff" />
 
           {/* Pulse rings */}
-          <circle cx={target.x} cy={target.y} r="6" fill="none" stroke="#f2a93b" strokeWidth="0.8">
+          {/* Full-span Target HQ Latitude & Longitude Crosshair Demarcation */}
+              <g className="target-coord-demarcation">
+                {/* Target Parallel (22.26° N) */}
+                <line
+                  x1="0"
+                  y1={target.y}
+                  x2="220"
+                  y2={target.y}
+                  stroke="#f2a93b"
+                  strokeWidth="0.6"
+                  strokeDasharray="3.5 2.5"
+                  opacity="0.75"
+                />
+                {/* Latitude badge at right margin */}
+                <rect x="182" y={target.y - 4.5} width="36" height="9" rx="1.5" fill="#06101a" stroke="#f2a93b" strokeWidth="0.6" opacity="0.95" />
+                <text x="200" y={target.y + 1.8} textAnchor="middle" fill="#f2a93b" fontSize="4.2" fontFamily="monospace" fontWeight="bold">
+                  22.26°N
+                </text>
+
+                {/* Target Meridian (84.90° E) */}
+                <line
+                  x1={target.x}
+                  y1="0"
+                  x2={target.x}
+                  y2="280"
+                  stroke="#f2a93b"
+                  strokeWidth="0.6"
+                  strokeDasharray="3.5 2.5"
+                  opacity="0.75"
+                />
+                {/* Longitude badge at bottom margin */}
+                <rect x={target.x - 18} y="246" width="36" height="9" rx="1.5" fill="#06101a" stroke="#f2a93b" strokeWidth="0.6" opacity="0.95" />
+                <text x={target.x} y={252.4} textAnchor="middle" fill="#f2a93b" fontSize="4.2" fontFamily="monospace" fontWeight="bold">
+                  84.90°E
+                </text>
+              </g>
+
+              <circle cx={target.x} cy={target.y} r="6" fill="none" stroke="#f2a93b" strokeWidth="0.8">
             <animate attributeName="r" values="6;22;6" dur="2.2s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.8;0;0.8" dur="2.2s" repeatCount="indefinite" />
           </circle>
@@ -557,7 +613,99 @@ export function IndiaMapPanel() {
           {/* Backgrounds */}
           <rect x="0" y="0" width="220" height="280" fill="#06101a" />
           <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-terrain)`} />
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.5" />
+          {/* Tactical perimeter border frame */}
+          <rect x="0.5" y="0.5" width="219" height="279" fill="none" stroke="#4a98ff" strokeWidth="0.5" opacity="0.35" />
+
+          {/* Faint micro grid */}
+          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.08" />
+
+          {/* Clear Geographic Graticule (Latitudes & Longitudes) */}
+          <g className="geographic-graticule">
+            {/* Latitude Parallels */}
+            {MAP_GRATICULE_LATS.map(({ lat, label }) => {
+              const y = projectMapPoint(80, lat).y;
+              return (
+                <g key={`lat-${lat}`}>
+                  <line
+                    x1="0"
+                    y1={y}
+                    x2="220"
+                    y2={y}
+                    stroke="#38bdf8"
+                    strokeWidth="0.3"
+                    strokeDasharray="2 3"
+                    opacity="0.3"
+                  />
+                  {/* Left and Right edge ticks */}
+                  <line x1="0" y1={y} x2="5" y2={y} stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
+                  <line x1="215" y1={y} x2="220" y2={y} stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
+                  {/* Left border degree label */}
+                  <text
+                    x="6"
+                    y={y + 1.4}
+                    fill="#7dd3fc"
+                    fontSize="4.2"
+                    fontFamily="monospace"
+                    fontWeight="600"
+                    opacity="0.8"
+                    style={{ userSelect: 'none' }}
+                  >
+                    {label}
+                  </text>
+                  {/* Right border degree label */}
+                  <text
+                    x="214"
+                    y={y + 1.4}
+                    textAnchor="end"
+                    fill="#7dd3fc"
+                    fontSize="4.2"
+                    fontFamily="monospace"
+                    fontWeight="600"
+                    opacity="0.55"
+                    style={{ userSelect: 'none' }}
+                  >
+                    {label}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Longitude Meridians */}
+            {MAP_GRATICULE_LONS.map(({ lon, label }) => {
+              const x = projectMapPoint(lon, 20).x;
+              return (
+                <g key={`lon-${lon}`}>
+                  <line
+                    x1={x}
+                    y1="0"
+                    x2={x}
+                    y2="280"
+                    stroke="#38bdf8"
+                    strokeWidth="0.3"
+                    strokeDasharray="2 3"
+                    opacity="0.3"
+                  />
+                  {/* Top and Bottom edge ticks */}
+                  <line x1={x} y1="0" x2={x} y2="5" stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
+                  <line x1={x} y1="275" x2={x} y2="280" stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
+                  {/* Bottom border degree label */}
+                  <text
+                    x={x}
+                    y="273.5"
+                    textAnchor="middle"
+                    fill="#7dd3fc"
+                    fontSize="4.2"
+                    fontFamily="monospace"
+                    fontWeight="600"
+                    opacity="0.8"
+                    style={{ userSelect: 'none' }}
+                  >
+                    {label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
 
           {/* Animated scan line */}
           {phase >= 2 && (

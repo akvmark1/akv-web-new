@@ -454,16 +454,25 @@ export function IndiaMapOverlay({ progress, compact = false }) {
  *   t=1600ms phase 5 — HQ info card + status dot slide in
  *   t=1950ms phase 6 — HUD corner brackets fade in
  */
+const FULL_COORD = '22.255471° N  /  84.903671° E';
+const CARD_DATA = {
+  tag: 'TARGET ACQUIRED',
+  title: 'AkashVahini HQ',
+  sub: 'NIT Rourkela Campus',
+  coords: 'Odisha · 22.26°N 84.90°E',
+};
+
 export function IndiaMapPanel() {
   const [mapData, setMapData] = useState(null);
   const [phase, setPhase] = useState(0);
   const [coordText, setCoordText] = useState('');
+  const [cardLines, setCardLines] = useState({ tag: '', title: '', sub: '', coords: '' });
+  const [typingStep, setTypingStep] = useState(0);
   const panelRef = useRef(null);
   const hasAnimated = useRef(false);
   const mapId = useId().replace(/:/g, '');
 
   const target = projectMapPoint(84.903671, 22.255471);
-  const FULL_COORD = '22.255471° N  /  84.903671° E';
 
   // Load GeoJSON
   useEffect(() => {
@@ -503,10 +512,51 @@ export function IndiaMapPanel() {
             if (i >= FULL_COORD.length) clearInterval(tw);
           }, 38);
         }, 1260);
+
+        // Sequenced Typewriter for Callout Card Text
+        const tCard = setTimeout(() => {
+          setTypingStep(1);
+          let i1 = 0;
+          const tw1 = setInterval(() => {
+            i1 += 1;
+            setCardLines((prev) => ({ ...prev, tag: CARD_DATA.tag.slice(0, i1) }));
+            if (i1 >= CARD_DATA.tag.length) {
+              clearInterval(tw1);
+              setTypingStep(2);
+              let i2 = 0;
+              const tw2 = setInterval(() => {
+                i2 += 1;
+                setCardLines((prev) => ({ ...prev, title: CARD_DATA.title.slice(0, i2) }));
+                if (i2 >= CARD_DATA.title.length) {
+                  clearInterval(tw2);
+                  setTypingStep(3);
+                  let i3 = 0;
+                  const tw3 = setInterval(() => {
+                    i3 += 1;
+                    setCardLines((prev) => ({ ...prev, sub: CARD_DATA.sub.slice(0, i3) }));
+                    if (i3 >= CARD_DATA.sub.length) {
+                      clearInterval(tw3);
+                      setTypingStep(4);
+                      let i4 = 0;
+                      const tw4 = setInterval(() => {
+                        i4 += 1;
+                        setCardLines((prev) => ({ ...prev, coords: CARD_DATA.coords.slice(0, i4) }));
+                        if (i4 >= CARD_DATA.coords.length) {
+                          clearInterval(tw4);
+                          setTypingStep(5);
+                        }
+                      }, 22);
+                    }
+                  }, 22);
+                }
+              }, 28);
+            }
+          }, 22);
+        }, 1500);
         const t6 = setTimeout(() => setPhase(5), 1600);
         const t7 = setTimeout(() => setPhase(6), 1950);
 
-        return () => [t2, t3, t4, t5, t6, t7].forEach(clearTimeout);
+        return () => [t2, t3, t4, t5, tCard, t6, t7].forEach(clearTimeout);
       },
       { threshold: 0.22 }
     );
@@ -891,7 +941,7 @@ export function IndiaMapPanel() {
                       <animate attributeName="opacity" values="0.35;1;0.35" dur="1.2s" repeatCount="indefinite" />
                     </circle>
 
-                    {/* Card Content — significantly larger and bold */}
+                    {/* Card Content — animated typewriter data stream */}
                     <text
                       x="131.5"
                       y="17.8"
@@ -901,7 +951,7 @@ export function IndiaMapPanel() {
                       fontWeight="bold"
                       letterSpacing="0.8"
                     >
-                      TARGET ACQUIRED
+                      {cardLines.tag}{typingStep === 1 && '_'}
                     </text>
 
                     <text
@@ -912,7 +962,7 @@ export function IndiaMapPanel() {
                       fontFamily="monospace"
                       fontWeight="bold"
                     >
-                      AkashVahini HQ
+                      {cardLines.title}{typingStep === 2 && '_'}
                     </text>
 
                     <text
@@ -922,7 +972,7 @@ export function IndiaMapPanel() {
                       fontSize="5.2"
                       fontFamily="monospace"
                     >
-                      NIT Rourkela Campus
+                      {cardLines.sub}{typingStep === 3 && '_'}
                     </text>
 
                     <text
@@ -933,7 +983,7 @@ export function IndiaMapPanel() {
                       fontFamily="monospace"
                       fontWeight="600"
                     >
-                      Odisha · 22.26°N 84.90°E
+                      {cardLines.coords}{typingStep === 4 && '_'}
                     </text>
                   </g>
                 </g>

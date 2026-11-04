@@ -610,7 +610,7 @@ export function IndiaMapPanel() {
           {/* Clear Geographic Graticule (Latitudes & Longitudes) */}
           <g className="geographic-graticule">
             {/* Latitude Parallels */}
-            {MAP_GRATICULE_LATS.map(({ lat, label }) => {
+            {MAP_GRATICULE_LATS.map(({ lat }) => {
               const y = projectMapPoint(80, lat).y;
               return (
                 <g key={`lat-${lat}`}>
@@ -620,46 +620,19 @@ export function IndiaMapPanel() {
                     x2="220"
                     y2={y}
                     stroke="#38bdf8"
-                    strokeWidth="0.3"
+                    strokeWidth="0.25"
                     strokeDasharray="2 3"
-                    opacity="0.3"
+                    opacity="0.2"
                   />
                   {/* Left and Right edge ticks */}
-                  <line x1="0" y1={y} x2="5" y2={y} stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
-                  <line x1="215" y1={y} x2="220" y2={y} stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
-                  {/* Left border degree label */}
-                  <text
-                    x="6"
-                    y={y + 1.4}
-                    fill="#7dd3fc"
-                    fontSize="4.2"
-                    fontFamily="monospace"
-                    fontWeight="600"
-                    opacity="0.8"
-                    style={{ userSelect: 'none' }}
-                  >
-                    {label}
-                  </text>
-                  {/* Right border degree label */}
-                  <text
-                    x="214"
-                    y={y + 1.4}
-                    textAnchor="end"
-                    fill="#7dd3fc"
-                    fontSize="4.2"
-                    fontFamily="monospace"
-                    fontWeight="600"
-                    opacity="0.55"
-                    style={{ userSelect: 'none' }}
-                  >
-                    {label}
-                  </text>
+                  <line x1="0" y1={y} x2="4" y2={y} stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
+                  <line x1="216" y1={y} x2="220" y2={y} stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
                 </g>
               );
             })}
 
             {/* Longitude Meridians */}
-            {MAP_GRATICULE_LONS.map(({ lon, label }) => {
+            {MAP_GRATICULE_LONS.map(({ lon }) => {
               const x = projectMapPoint(lon, 20).x;
               return (
                 <g key={`lon-${lon}`}>
@@ -669,27 +642,13 @@ export function IndiaMapPanel() {
                     x2={x}
                     y2="280"
                     stroke="#38bdf8"
-                    strokeWidth="0.3"
+                    strokeWidth="0.25"
                     strokeDasharray="2 3"
-                    opacity="0.3"
+                    opacity="0.2"
                   />
                   {/* Top and Bottom edge ticks */}
-                  <line x1={x} y1="0" x2={x} y2="5" stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
-                  <line x1={x} y1="275" x2={x} y2="280" stroke="#38bdf8" strokeWidth="0.8" opacity="0.8" />
-                  {/* Bottom border degree label */}
-                  <text
-                    x={x}
-                    y="273.5"
-                    textAnchor="middle"
-                    fill="#7dd3fc"
-                    fontSize="4.2"
-                    fontFamily="monospace"
-                    fontWeight="600"
-                    opacity="0.8"
-                    style={{ userSelect: 'none' }}
-                  >
-                    {label}
-                  </text>
+                  <line x1={x} y1="0" x2={x} y2="4" stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
+                  <line x1={x} y1="276" x2={x} y2="280" stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
                 </g>
               );
             })}
@@ -798,51 +757,117 @@ export function IndiaMapPanel() {
                 <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" begin="0.75s" repeatCount="indefinite" />
               </circle>
 
-              {/* Crosshair arms */}
-              <line x1={target.x - 14} y1={target.y} x2={target.x - 7} y2={target.y} stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
-              <line x1={target.x + 7}  y1={target.y} x2={target.x + 14} y2={target.y} stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
-              <line x1={target.x} y1={target.y - 14} x2={target.x} y2={target.y - 7}  stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
-              <line x1={target.x} y1={target.y + 7}  x2={target.x} y2={target.y + 14} stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
+              {/* Rotating tactical reticle ring */}
+              <circle
+                cx={target.x}
+                cy={target.y}
+                r="10"
+                fill="none"
+                stroke="#f2a93b"
+                strokeWidth="0.5"
+                strokeDasharray="4 3"
+                opacity="0.7"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from={`0 ${target.x} ${target.y}`}
+                  to={`360 ${target.x} ${target.y}`}
+                  dur="14s"
+                  repeatCount="indefinite"
+                />
+              </circle>
 
-              {/* Pin dot — outer glow + white core + amber centre */}
-              <circle cx={target.x} cy={target.y} r="5.5" fill="#f2a93b" filter={`url(#${mapId}-pinGlow)`} />
+              {/* Animated Crosshair arms with breathing pulse */}
+              <g>
+                <line x1={target.x - 14} y1={target.y} x2={target.x - 6} y2={target.y} stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+                <line x1={target.x + 6}  y1={target.y} x2={target.x + 14} y2={target.y} stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+                <line x1={target.x} y1={target.y - 14} x2={target.x} y2={target.y - 6}  stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+                <line x1={target.x} y1={target.y + 6}  x2={target.x} y2={target.y + 14} stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+              </g>
+
+              {/* Pin dot — glow + core */}
+              <circle cx={target.x} cy={target.y} r="5.5" fill="#f2a93b" filter={`url(#${mapId}-pinGlow)`}>
+                <animate attributeName="opacity" values="0.85;1;0.85" dur="2s" repeatCount="indefinite" />
+              </circle>
               <circle cx={target.x} cy={target.y} r="2.8" fill="#fff" />
               <circle cx={target.x} cy={target.y} r="1.1" fill="#f2a93b" />
 
-              {/* Integrated Tactical Leader Line & HQ Callout Card */}
+              {/* Integrated Tactical Leader Line & HQ Callout Card with sequenced animations */}
               {phase >= 4 && (
                 <g className="hq-callout-annotation">
-                  {/* Diagonal Leader Line from Pin to Callout Shelf */}
+                  {/* Animated Diagonal Leader Line from Pin to Shelf */}
                   <line
                     x1={target.x + 2}
                     y1={target.y - 6}
                     x2={144}
                     y2={46}
                     stroke="#f2a93b"
-                    strokeWidth="0.8"
-                    strokeDasharray="3 2"
-                    opacity="0.85"
-                  />
+                    strokeWidth="0.85"
+                    strokeDasharray="95"
+                    strokeDashoffset="95"
+                    opacity="0.9"
+                  >
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      from="95"
+                      to="0"
+                      dur="0.6s"
+                      fill="freeze"
+                    />
+                  </line>
                   {/* Origin connector dot at pin */}
-                  <circle cx={target.x + 2} cy={target.y - 6} r="1.3" fill="#f2a93b" />
+                  <circle cx={target.x + 2} cy={target.y - 6} r="1.3" fill="#f2a93b">
+                    <animate attributeName="opacity" from="0" to="1" dur="0.2s" fill="freeze" />
+                  </circle>
 
-                  {/* Horizontal Underline / Shelf */}
+                  {/* Animated Horizontal Shelf Line (draws right after diagonal line reaches elbow) */}
                   <line
                     x1={144}
                     y1={46}
-                    x2={216}
+                    x2={144}
                     y2={46}
                     stroke="#f2a93b"
-                    strokeWidth="0.9"
-                    opacity="0.9"
-                  />
+                    strokeWidth="0.95"
+                    opacity="0.95"
+                  >
+                    <animate
+                      attributeName="x2"
+                      from="144"
+                      to="216"
+                      dur="0.4s"
+                      begin="0.55s"
+                      fill="freeze"
+                    />
+                  </line>
                   {/* Elbow connector dot */}
-                  <circle cx={144} cy={46} r="1.6" fill="#f2a93b" />
+                  <circle cx={144} cy={46} r="1.6" fill="#f2a93b" opacity="0">
+                    <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.55s" fill="freeze" />
+                  </circle>
                   {/* Terminal tick on shelf */}
-                  <line x1={216} y1={43} x2={216} y2={46} stroke="#f2a93b" strokeWidth="0.9" opacity="0.9" />
+                  <line x1={216} y1={43} x2={216} y2={46} stroke="#f2a93b" strokeWidth="0.95" opacity="0">
+                    <animate attributeName="opacity" from="0" to="0.95" dur="0.2s" begin="0.95s" fill="freeze" />
+                  </line>
 
-                  {/* Tactical Callout Box right on top of the yellow line */}
-                  <g>
+                  {/* Tactical Callout Box (Smoothly fades in as the shelf finishes drawing) */}
+                  <g opacity="0">
+                    <animate
+                      attributeName="opacity"
+                      from="0"
+                      to="1"
+                      dur="0.35s"
+                      begin="0.8s"
+                      fill="freeze"
+                    />
+
                     {/* Background panel */}
                     <rect
                       x="142"
@@ -861,9 +886,14 @@ export function IndiaMapPanel() {
                     <path d="M 142 18 L 142 14 L 146 14" fill="none" stroke="#f2a93b" strokeWidth="0.8" opacity="0.9" />
                     <path d="M 212 14 L 216 14 L 216 18" fill="none" stroke="#f2a93b" strokeWidth="0.8" opacity="0.9" />
 
+                    {/* Live status pulsing green dot */}
+                    <circle cx="147" cy="20.5" r="1.1" fill="#22c55e">
+                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite" />
+                    </circle>
+
                     {/* Card Content directly connected to the line */}
                     <text
-                      x="146.5"
+                      x="151"
                       y="21.5"
                       fill="#f2a93b"
                       fontSize="3.4"

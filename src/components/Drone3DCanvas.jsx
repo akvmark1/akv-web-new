@@ -2,8 +2,6 @@ import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const COMPANY_COORDINATES = '22.255471° N / 84.903671° E';
-
 function SpaceParticles({ count = 180 }) {
   const pointsRef = useRef();
   const positions = useMemo(() => {
@@ -273,188 +271,6 @@ const NEIGHBOR_LABELS = [
   { name: 'ANDHRA P.',    lon: 79.3, lat: 15.6 },
 ];
 
-// ─── IndiaMapOverlay — used inside Hero Drone3DCanvas ────────────────────────
-
-export function IndiaMapOverlay({ progress, compact = false }) {
-  const [mapData, setMapData] = useState(null);
-  const mapId = useId().replace(/:/g, '');
-  const mapOpacity = THREE.MathUtils.smoothstep(progress, 0.24, 0.66);
-  const mapScale = 0.72 + mapOpacity * 0.28;
-  const target = projectMapPoint(84.903671, 22.255471);
-  const mapSize = compact
-    ? 'w-[180px] h-[220px] sm:w-[195px] sm:h-[235px]'
-    : 'w-[260px] h-[320px] md:w-[300px] md:h-[360px]';
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch('/maps/india-states-simplified.json')
-      .then((r) => (r.ok ? r.json() : { features: [] }))
-      .then((data) => {
-        if (!cancelled) setMapData(data);
-      })
-      .catch(() => {
-        if (!cancelled) setMapData({ features: [] });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return (
-    <div
-      className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-500"
-      style={{ opacity: mapOpacity }}
-      aria-hidden="true"
-    >
-      <div
-        className={`relative ${mapSize} transition-transform duration-700`}
-        style={{ transform: `scale(${mapScale})` }}
-      >
-        <svg
-          className="absolute inset-0 w-full h-full overflow-visible"
-          viewBox="0 0 220 280"
-          role="img"
-          aria-label="India location tracking map"
-        >
-          <defs>
-            <radialGradient id={`${mapId}-terrain`} cx="55%" cy="48%" r="65%">
-              <stop offset="0%" stopColor="#1a3828" stopOpacity="0.18" />
-              <stop offset="50%" stopColor="#0d1b2a" stopOpacity="0" />
-              <stop offset="100%" stopColor="#071220" stopOpacity="0.22" />
-            </radialGradient>
-            <pattern id={`${mapId}-grid`} width="14" height="14" patternUnits="userSpaceOnUse">
-              <path d="M 14 0 L 0 0 0 14" fill="none" stroke="#f2a93b" strokeWidth="0.3" opacity="0.3" />
-            </pattern>
-            <filter id={`${mapId}-glow`}>
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id={`${mapId}-pinGlow`} x="-80%" y="-80%" width="260%" height="260%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-terrain)`} />
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.42" />
-
-          {mapData?.features.map((feature) => {
-            const name = feature.properties?.NAME_1 ?? '';
-            const style = getStateStyle(name);
-            return (
-              <path
-                key={name}
-                d={geometryToPath(feature.geometry)}
-                fill={style.fill}
-                fillOpacity={style.fillOpacity}
-                stroke={style.stroke}
-                strokeWidth={style.strokeWidth}
-                strokeLinejoin="round"
-                filter={style.glow ? `url(#${mapId}-glow)` : undefined}
-              />
-            );
-          })}
-
-          {/* Crosshair arms */}
-          <line x1={target.x - 11} y1={target.y} x2={target.x - 6} y2={target.y} stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-          <line x1={target.x + 6}  y1={target.y} x2={target.x + 11} y2={target.y} stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-          <line x1={target.x} y1={target.y - 11} x2={target.x} y2={target.y - 6}  stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-          <line x1={target.x} y1={target.y + 6}  x2={target.x} y2={target.y + 11} stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-
-          {/* Pin dot */}
-          <circle cx={target.x} cy={target.y} r="4.5" fill="#f2a93b" filter={`url(#${mapId}-pinGlow)`} />
-          <circle cx={target.x} cy={target.y} r="2"   fill="#fff" />
-
-          {/* Pulse rings */}
-          {/* Full-span Target HQ Latitude & Longitude Crosshair Demarcation */}
-              <g className="target-coord-demarcation">
-                {/* Target Parallel (22.26° N) */}
-                <line
-                  x1="0"
-                  y1={target.y}
-                  x2="220"
-                  y2={target.y}
-                  stroke="#f2a93b"
-                  strokeWidth="0.6"
-                  strokeDasharray="3.5 2.5"
-                  opacity="0.75"
-                />
-                {/* Latitude badge at right margin */}
-                <rect x="182" y={target.y - 4.5} width="36" height="9" rx="1.5" fill="#06101a" stroke="#f2a93b" strokeWidth="0.6" opacity="0.95" />
-                <text x="200" y={target.y + 1.8} textAnchor="middle" fill="#f2a93b" fontSize="4.2" fontFamily="monospace" fontWeight="bold">
-                  22.26°N
-                </text>
-
-                {/* Target Meridian (84.90° E) */}
-                <line
-                  x1={target.x}
-                  y1="0"
-                  x2={target.x}
-                  y2="280"
-                  stroke="#f2a93b"
-                  strokeWidth="0.6"
-                  strokeDasharray="3.5 2.5"
-                  opacity="0.75"
-                />
-                {/* Longitude badge at bottom margin */}
-                <rect x={target.x - 18} y="246" width="36" height="9" rx="1.5" fill="#06101a" stroke="#f2a93b" strokeWidth="0.6" opacity="0.95" />
-                <text x={target.x} y={252.4} textAnchor="middle" fill="#f2a93b" fontSize="4.2" fontFamily="monospace" fontWeight="bold">
-                  84.90°E
-                </text>
-              </g>
-
-              <circle cx={target.x} cy={target.y} r="6" fill="none" stroke="#f2a93b" strokeWidth="0.8">
-            <animate attributeName="r" values="6;22;6" dur="2.2s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.8;0;0.8" dur="2.2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx={target.x} cy={target.y} r="6" fill="none" stroke="#f2a93b" strokeWidth="0.6">
-            <animate attributeName="r" values="5;14;5" dur="2.2s" begin="0.55s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.6;0;0.6" dur="2.2s" begin="0.55s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Leader dashed line */}
-          <line
-            x1={target.x}
-            y1={target.y - 4}
-            x2={Math.min(target.x + 38, 208)}
-            y2={target.y - 18}
-            stroke="#f2a93b"
-            strokeWidth="0.8"
-            strokeDasharray="2 3"
-          />
-        </svg>
-
-        {compact ? (
-          <div className="absolute inset-x-0 bottom-1 text-center">
-            <div className="font-mono text-[9px] tracking-[0.12em] text-amber/85">{COMPANY_COORDINATES}</div>
-          </div>
-        ) : (
-          <div
-            className="absolute translate-x-3 -translate-y-[calc(50%+18px)] whitespace-nowrap text-left"
-            style={{
-              left: `${Math.min((target.x / 220) * 100 + 14, 68)}%`,
-              top: `${(target.y / 280) * 100}%`,
-            }}
-          >
-            <div className="h-px w-14 bg-amber/70 mb-2" />
-            <div className="font-mono text-[9px] tracking-[0.22em] text-amber uppercase">Odisha / target locked</div>
-            <div className="font-mono text-[10px] text-white/75 mt-1">{COMPANY_COORDINATES}</div>
-            <div className="text-[11px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── IndiaMapPanel — About section, full animated version ────────────────────
 
 /**
@@ -575,6 +391,8 @@ export function IndiaMapPanel() {
         }, 1260);
 
         // Sequenced Typewriter for Callout Card Text
+        safeTimeout(() => setPhase(5), 1400);
+
         safeTimeout(() => {
           setTypingStep(1);
           let i1 = 0;
@@ -606,17 +424,16 @@ export function IndiaMapPanel() {
                           clearInterval(tw4);
                           setTypingStep(5);
                         }
-                      }, 22);
+                      }, 20);
                     }
-                  }, 22);
+                  }, 20);
                 }
-              }, 28);
+              }, 25);
             }
-          }, 22);
-        }, 1500);
+          }, 20);
+        }, 1450);
 
-        safeTimeout(() => setPhase(5), 1600);
-        safeTimeout(() => setPhase(6), 1950);
+        safeTimeout(() => setPhase(6), 1900);
       },
       { threshold: 0.18 }
     );
@@ -685,10 +502,6 @@ export function IndiaMapPanel() {
               <stop offset="55%"  stopColor="#f2a93b" stopOpacity="0.1"  />
               <stop offset="100%" stopColor="#f2a93b" stopOpacity="0"    />
             </radialGradient>
-            {/* Tactical grid overlay */}
-            <pattern id={`${mapId}-grid`} width="14" height="14" patternUnits="userSpaceOnUse">
-              <path d="M 14 0 L 0 0 0 14" fill="none" stroke="#f2a93b" strokeWidth="0.22" opacity="0.22" />
-            </pattern>
             {/* State glow (Odisha only) */}
             <filter id={`${mapId}-stateGlow`} x="-15%" y="-15%" width="130%" height="130%">
               <feGaussianBlur stdDeviation="3.5" result="blur" />
@@ -714,54 +527,44 @@ export function IndiaMapPanel() {
           {/* Backgrounds */}
           <rect x="0" y="0" width="220" height="280" fill="#06101a" />
           <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-terrain)`} />
+
           {/* Tactical perimeter border frame */}
-          <rect x="0.5" y="0.5" width="219" height="279" fill="none" stroke="#4a98ff" strokeWidth="0.5" opacity="0.35" />
+          <rect x="0.5" y="0.5" width="219" height="279" fill="none" stroke="#f2a93b" strokeWidth="0.5" opacity="0.28" />
 
-          {/* Faint micro grid */}
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.08" />
+          {/* Concentric Tactical Radar Range Rings around HQ Pin */}
+          <g opacity={phase >= 2 ? 0.45 : 0} style={{ transition: 'opacity 0.6s ease' }}>
+            <circle cx={target.x} cy={target.y} r="26" fill="none" stroke="#f2a93b" strokeWidth="0.35" strokeDasharray="2 3" opacity="0.7" />
+            <circle cx={target.x} cy={target.y} r="54" fill="none" stroke="#38bdf8" strokeWidth="0.3" strokeDasharray="3 4" opacity="0.55" />
+            <circle cx={target.x} cy={target.y} r="88" fill="none" stroke="#38bdf8" strokeWidth="0.25" strokeDasharray="3 5" opacity="0.4" />
+          </g>
 
-          {/* Clear Geographic Graticule (Latitudes & Longitudes) */}
-          <g className="geographic-graticule">
-            {/* Latitude Parallels */}
+          {/* Tactical Micro Crosshairs at quadrant points */}
+          <g stroke="rgba(242,169,59,0.35)" strokeWidth="0.5" opacity={phase >= 1 ? 0.75 : 0}>
+            {/* Top-left */}
+            <path d="M 22 18 L 22 22 M 20 20 L 24 20" />
+            {/* Bottom-left */}
+            <path d="M 22 258 L 22 262 M 20 260 L 24 260" />
+            {/* Bottom-right */}
+            <path d="M 198 258 L 198 262 M 196 260 L 200 260" />
+          </g>
+
+          {/* Border Calibration Ticks (clean edge ticks without crossing lines) */}
+          <g className="geographic-border-ticks" opacity="0.55">
             {MAP_GRATICULE_LATS.map(({ lat }) => {
               const y = projectMapPoint(80, lat).y;
               return (
-                <g key={`lat-${lat}`}>
-                  <line
-                    x1="0"
-                    y1={y}
-                    x2="220"
-                    y2={y}
-                    stroke="#38bdf8"
-                    strokeWidth="0.25"
-                    strokeDasharray="2 3"
-                    opacity="0.2"
-                  />
-                  {/* Left and Right edge ticks */}
-                  <line x1="0" y1={y} x2="4" y2={y} stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
-                  <line x1="216" y1={y} x2="220" y2={y} stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
+                <g key={`lat-tick-${lat}`}>
+                  <line x1="0" y1={y} x2="3.5" y2={y} stroke="#f2a93b" strokeWidth="0.6" />
+                  <line x1="216.5" y1={y} x2="220" y2={y} stroke="#f2a93b" strokeWidth="0.6" />
                 </g>
               );
             })}
-
-            {/* Longitude Meridians */}
             {MAP_GRATICULE_LONS.map(({ lon }) => {
               const x = projectMapPoint(lon, 20).x;
               return (
-                <g key={`lon-${lon}`}>
-                  <line
-                    x1={x}
-                    y1="0"
-                    x2={x}
-                    y2="280"
-                    stroke="#38bdf8"
-                    strokeWidth="0.25"
-                    strokeDasharray="2 3"
-                    opacity="0.2"
-                  />
-                  {/* Top and Bottom edge ticks */}
-                  <line x1={x} y1="0" x2={x} y2="4" stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
-                  <line x1={x} y1="276" x2={x} y2="280" stroke="#38bdf8" strokeWidth="0.65" opacity="0.6" />
+                <g key={`lon-tick-${lon}`}>
+                  <line x1={x} y1="0" x2={x} y2="3.5" stroke="#f2a93b" strokeWidth="0.6" />
+                  <line x1={x} y1="276.5" x2={x} y2="280" stroke="#f2a93b" strokeWidth="0.6" />
                 </g>
               );
             })}
@@ -914,134 +717,135 @@ export function IndiaMapPanel() {
               {/* Integrated Tactical Leader Line & HQ Callout Card with sequenced animations */}
               {phase >= 4 && (
                 <g className="hq-callout-annotation">
-                  {/* Animated Diagonal Leader Line from Pin to Shelf */}
-                  <line
-                    x1={target.x + 2}
-                    y1={target.y - 6}
-                    x2={120}
-                    y2={55}
+                  {/* Animated Leader Line from Pin to Shelf */}
+                  <path
+                    d={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                    fill="none"
                     stroke="#f2a93b"
                     strokeWidth="1"
-                    strokeDasharray="80"
-                    strokeDashoffset="80"
-                    opacity="0.9"
-                  >
-                    <animate
-                      attributeName="stroke-dashoffset"
-                      from="80"
-                      to="0"
-                      dur="0.6s"
-                      fill="freeze"
-                    />
-                  </line>
-                  {/* Origin connector dot at pin */}
-                  <circle cx={target.x + 2} cy={target.y - 6} r="1.5" fill="#f2a93b">
-                    <animate attributeName="opacity" from="0" to="1" dur="0.2s" fill="freeze" />
+                    strokeDasharray="132"
+                    strokeDashoffset={phase >= 4 ? 0 : 132}
+                    style={{
+                      transition: 'stroke-dashoffset 0.65s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  />
+
+                  {/* Pin anchor dot */}
+                  <circle cx={target.x} cy={target.y - 7} r="1.4" fill="#f2a93b" />
+
+                  {/* Elbow connector node with radar pulse */}
+                  <circle cx="136" cy="76" r="1.8" fill="#f2a93b" />
+                  <circle cx="136" cy="76" r="3.2" fill="none" stroke="#f2a93b" strokeWidth="0.4" opacity="0.6">
+                    <animate attributeName="r" values="2;4.5;2" dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2s" repeatCount="indefinite" />
                   </circle>
 
-                  {/* Animated Horizontal Shelf Line */}
-                  <line
-                    x1={120}
-                    y1={55}
-                    x2={120}
-                    y2={55}
-                    stroke="#f2a93b"
-                    strokeWidth="1.1"
-                    opacity="0.95"
-                  >
-                    <animate
-                      attributeName="x2"
-                      from="120"
-                      to="217"
-                      dur="0.4s"
-                      begin="0.55s"
-                      fill="freeze"
+                  {/* Terminal shelf tick */}
+                  <line x1="212" y1="72" x2="212" y2="76" stroke="#f2a93b" strokeWidth="1" />
+
+                  {/* Continuous Animated Telemetry Data Packet Pulses traveling along leader line */}
+                  <circle r="1.8" fill="#FFDE59" filter={`url(#${mapId}-pinGlow)`}>
+                    <animateMotion
+                      path={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                      dur="2.2s"
+                      repeatCount="indefinite"
                     />
-                  </line>
-                  {/* Elbow connector dot */}
-                  <circle cx={120} cy={55} r="2" fill="#f2a93b" opacity="0">
-                    <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.55s" fill="freeze" />
                   </circle>
-                  {/* Terminal tick on shelf */}
-                  <line x1={217} y1={50} x2={217} y2={55} stroke="#f2a93b" strokeWidth="1.1" opacity="0">
-                    <animate attributeName="opacity" from="0" to="0.95" dur="0.2s" begin="0.95s" fill="freeze" />
-                  </line>
-
-                  {/* Significantly Enlarged Tactical Callout Box */}
-                  <g opacity="0">
-                    <animate
-                      attributeName="opacity"
-                      from="0"
-                      to="1"
-                      dur="0.35s"
-                      begin="0.8s"
-                      fill="freeze"
+                  <circle r="0.9" fill="#ffffff">
+                    <animateMotion
+                      path={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                      dur="2.2s"
+                      repeatCount="indefinite"
                     />
+                  </circle>
+                  <circle r="1.2" fill="#FFDE59" opacity="0.7">
+                    <animateMotion
+                      path={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                      dur="2.2s"
+                      begin="1.1s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
 
-                    {/* Background panel */}
+                  {/* Tactical Callout Box — Perfectly aligned and proportioned */}
+                  <g
+                    opacity={phase >= 5 ? 1 : 0}
+                    style={{
+                      transform: phase >= 5 ? 'translateY(0)' : 'translateY(4px)',
+                      transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
+                    }}
+                  >
+                    {/* Background Glass Panel */}
                     <rect
-                      x="120"
-                      y="7"
-                      width="97"
-                      height="48"
-                      rx="3"
-                      fill="#06101a"
+                      x="118"
+                      y="32"
+                      width="94"
+                      height="44"
+                      rx="2.5"
+                      fill="#06121f"
                       fillOpacity="0.95"
                       stroke="#f2a93b"
-                      strokeWidth="0.85"
-                      strokeOpacity="0.88"
+                      strokeWidth="0.75"
+                      strokeOpacity="0.8"
                     />
 
-                    {/* Corner accent brackets on callout box */}
-                    <path d="M 120 14 L 120 7 L 127 7" fill="none" stroke="#f2a93b" strokeWidth="1.1" opacity="0.95" />
-                    <path d="M 210 7 L 217 7 L 217 14" fill="none" stroke="#f2a93b" strokeWidth="1.1" opacity="0.95" />
+                    {/* Tactical corner accent brackets */}
+                    <path d="M 118 38 L 118 32 L 124 32" fill="none" stroke="#f2a93b" strokeWidth="1" />
+                    <path d="M 206 32 L 212 32 L 212 38" fill="none" stroke="#f2a93b" strokeWidth="1" />
 
-                    {/* Live status pulsing green dot */}
-                    <circle cx="127" cy="16.5" r="1.5" fill="#22c55e">
-                      <animate attributeName="opacity" values="0.35;1;0.35" dur="1.2s" repeatCount="indefinite" />
+                    {/* Row 1: Header / Status with Green Dot & Tag */}
+                    <circle cx="125" cy="39" r="1.3" fill="#22c55e">
+                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite" />
                     </circle>
-
-                    {/* Card Content — animated typewriter data stream */}
                     <text
-                      x="131.5"
-                      y="17.8"
+                      x="129"
+                      y="40.2"
                       fill="#f2a93b"
-                      fontSize="4.8"
-                      fontFamily="monospace"
-                      fontWeight="bold"
+                      fontSize="4"
+                      fontFamily="'IBM Plex Mono', monospace"
+                      fontWeight="600"
                       letterSpacing="0.8"
                     >
                       {cardLines.tag}{typingStep === 1 && '_'}
                     </text>
 
+                    {/* Subtle Hairline Divider */}
+                    <line x1="123" y1="43" x2="207" y2="43" stroke="rgba(242,169,59,0.22)" strokeWidth="0.35" strokeDasharray="3 2" />
+
+                    {/* Row 2: Title — AkashVahini HQ */}
                     <text
                       x="125"
-                      y="27.8"
+                      y="51.5"
                       fill="#ffffff"
-                      fontSize="7.5"
-                      fontFamily="monospace"
-                      fontWeight="bold"
+                      fontSize="6.6"
+                      fontFamily="'Space Grotesk', sans-serif"
+                      fontWeight="700"
+                      letterSpacing="0.2"
                     >
                       {cardLines.title}{typingStep === 2 && '_'}
                     </text>
 
+                    {/* Row 3: Subtitle — NIT Rourkela Campus */}
                     <text
                       x="125"
-                      y="37.2"
-                      fill="rgba(255,255,255,0.9)"
-                      fontSize="5.2"
-                      fontFamily="monospace"
+                      y="60"
+                      fill="rgba(255,255,255,0.72)"
+                      fontSize="4.7"
+                      fontFamily="'Space Grotesk', sans-serif"
+                      fontWeight="500"
                     >
                       {cardLines.sub}{typingStep === 3 && '_'}
                     </text>
 
+                    {/* Row 4: Coordinates — Odisha · 22.26°N 84.90°E */}
                     <text
                       x="125"
-                      y="46.2"
-                      fill="#7dd3fc"
-                      fontSize="4.8"
-                      fontFamily="monospace"
+                      y="68"
+                      fill="#38bdf8"
+                      fontSize="4.2"
+                      fontFamily="'IBM Plex Mono', monospace"
                       fontWeight="600"
+                      letterSpacing="0.3"
                     >
                       {cardLines.coords}{typingStep === 4 && '_'}
                     </text>
@@ -1125,7 +929,7 @@ class WebGLSceneBoundary extends React.Component {
   }
 }
 
-export default function Drone3DCanvas({ progress = 0, className = '', showMap = false }) {
+export default function Drone3DCanvas({ progress = 0, className = '' }) {
   const [webGLAvailable] = useState(() => {
     const canvas = document.createElement('canvas');
     const context =
@@ -1143,7 +947,6 @@ export default function Drone3DCanvas({ progress = 0, className = '', showMap = 
       ) : (
         <FallbackScene progress={progress} />
       )}
-      {showMap && <IndiaMapOverlay progress={progress} />}
     </div>
   );
 }

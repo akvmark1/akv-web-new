@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
+import AkvLogo from './AkvLogo';
 
-export default function Navigation() {
+export default function Navigation({ introDocked = true }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 30);
+      setShowBackToTop(window.scrollY > 300);
 
       const sections = ['hero', 'product', 'technology', 'applications', 'about', 'contact'];
       const scrollPosition = window.scrollY + 120;
@@ -51,34 +54,29 @@ export default function Navigation() {
           {/* Brand Logo */}
           <a
             href="#hero"
-            className="font-display font-bold text-base md:text-lg lg:text-xl text-white tracking-wider flex items-center group flex-shrink-0"
+            className="font-magz text-xl sm:text-2xl md:text-[28px] lg:text-[32px] text-white flex items-center gap-3 group flex-shrink-0"
           >
-            <span>AKASH</span>
-            <span className="text-amber group-hover:text-amber-glow transition-colors">VAHINI</span>
+            <div
+              id="navbar-brand-logo-slot"
+              className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex-shrink-0 transition-opacity duration-300 ${
+                introDocked ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <AkvLogo className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105" />
+            </div>
+            <div
+              className={`font-magz flex items-center overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                introDocked
+                  ? 'max-w-[320px] opacity-100 translate-x-0'
+                  : 'max-w-0 opacity-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
+              <span>akash</span><span className="text-amber group-hover:text-amber-glow transition-colors">vahini</span>
+            </div>
           </a>
 
-          {/* Desktop Navigation Links — visible lg and up */}
-          <div className="hidden lg:flex items-center gap-5 xl:gap-8 text-[13px] xl:text-[13.5px] font-medium tracking-wide flex-1 justify-center">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className={`transition-colors duration-200 relative py-1 whitespace-nowrap ${
-                  activeSection === link.id
-                    ? 'text-amber font-semibold'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                {link.name}
-                {activeSection === link.id && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber rounded-full" />
-                )}
-              </a>
-            ))}
-          </div>
-
-          {/* Compact nav for md screens (768–1023px) */}
-          <div className="hidden md:flex lg:hidden items-center gap-3 text-[11.5px] font-medium tracking-wide flex-1 justify-center">
+          {/* Navigation Links — visible md and up */}
+          <div className="hidden md:flex items-center gap-3 lg:gap-5 xl:gap-8 text-[11.5px] lg:text-[13px] xl:text-[13.5px] font-medium tracking-wide flex-1 justify-center">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -145,7 +143,13 @@ export default function Navigation() {
       </nav>
 
       {/* Back to top / Home button */}
-      <div className="fixed right-5 bottom-5 z-[60] group flex flex-col items-center gap-1.5">
+      <div
+        className={`fixed right-5 bottom-5 z-[60] group flex flex-col items-center gap-1.5 transition-all duration-300 ${
+          showBackToTop
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+      >
         {/* Tooltip */}
         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-mono text-[10px] tracking-widest text-amber/80 uppercase pointer-events-none">
           Home

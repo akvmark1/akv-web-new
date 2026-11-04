@@ -543,19 +543,7 @@ export function IndiaMapPanel() {
         <span className="font-mono text-[8px] text-white/45 tracking-widest uppercase">Live · Operations</span>
       </div>
 
-      {/* HQ info card */}
-      <div
-        className="absolute top-3 right-3 z-20 text-right transition-all duration-500"
-        style={{
-          opacity: phase >= 5 ? 1 : 0,
-          transform: phase >= 5 ? 'translateX(0)' : 'translateX(10px)',
-        }}
-      >
-        <div className="font-mono text-[7px] text-amber/55 tracking-widest uppercase mb-0.5">Target Acquired</div>
-        <div className="font-mono text-[9.5px] text-white/90 font-semibold">AkashVahini HQ</div>
-        <div className="font-mono text-[8px] text-white/55 mt-0.5">NIT Rourkela Campus</div>
-        <div className="font-mono text-[7.5px] text-white/40">Odisha, India</div>
-      </div>
+      {/* HQ info card integrated inside SVG below */}
 
       {/* SVG map */}
       <div
@@ -821,18 +809,105 @@ export function IndiaMapPanel() {
               <circle cx={target.x} cy={target.y} r="2.8" fill="#fff" />
               <circle cx={target.x} cy={target.y} r="1.1" fill="#f2a93b" />
 
-              {/* Leader dashed line to top-right info card direction */}
-              <line
-                x1={target.x}
-                y1={target.y - 5}
-                x2={target.x + 34}
-                y2={target.y - 26}
-                stroke="#f2a93b"
-                strokeWidth="0.7"
-                strokeDasharray="2.5 2.5"
-                opacity="0.65"
-              />
-              <circle cx={target.x + 34} cy={target.y - 26} r="1.5" fill="#f2a93b" opacity="0.65" />
+              {/* Integrated Tactical Leader Line & HQ Callout Card */}
+              {phase >= 4 && (
+                <g className="hq-callout-annotation">
+                  {/* Diagonal Leader Line from Pin to Callout Shelf */}
+                  <line
+                    x1={target.x + 2}
+                    y1={target.y - 6}
+                    x2={144}
+                    y2={46}
+                    stroke="#f2a93b"
+                    strokeWidth="0.8"
+                    strokeDasharray="3 2"
+                    opacity="0.85"
+                  />
+                  {/* Origin connector dot at pin */}
+                  <circle cx={target.x + 2} cy={target.y - 6} r="1.3" fill="#f2a93b" />
+
+                  {/* Horizontal Underline / Shelf */}
+                  <line
+                    x1={144}
+                    y1={46}
+                    x2={216}
+                    y2={46}
+                    stroke="#f2a93b"
+                    strokeWidth="0.9"
+                    opacity="0.9"
+                  />
+                  {/* Elbow connector dot */}
+                  <circle cx={144} cy={46} r="1.6" fill="#f2a93b" />
+                  {/* Terminal tick on shelf */}
+                  <line x1={216} y1={43} x2={216} y2={46} stroke="#f2a93b" strokeWidth="0.9" opacity="0.9" />
+
+                  {/* Tactical Callout Box right on top of the yellow line */}
+                  <g>
+                    {/* Background panel */}
+                    <rect
+                      x="142"
+                      y="14"
+                      width="74"
+                      height="31"
+                      rx="2"
+                      fill="#06101a"
+                      fillOpacity="0.92"
+                      stroke="#f2a93b"
+                      strokeWidth="0.6"
+                      strokeOpacity="0.75"
+                    />
+
+                    {/* Corner accent brackets on callout box */}
+                    <path d="M 142 18 L 142 14 L 146 14" fill="none" stroke="#f2a93b" strokeWidth="0.8" opacity="0.9" />
+                    <path d="M 212 14 L 216 14 L 216 18" fill="none" stroke="#f2a93b" strokeWidth="0.8" opacity="0.9" />
+
+                    {/* Card Content directly connected to the line */}
+                    <text
+                      x="146.5"
+                      y="21.5"
+                      fill="#f2a93b"
+                      fontSize="3.4"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                      letterSpacing="0.6"
+                    >
+                      TARGET ACQUIRED
+                    </text>
+
+                    <text
+                      x="146.5"
+                      y="28.5"
+                      fill="#ffffff"
+                      fontSize="5"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
+                      AkashVahini HQ
+                    </text>
+
+                    <text
+                      x="146.5"
+                      y="35"
+                      fill="rgba(255,255,255,0.75)"
+                      fontSize="3.6"
+                      fontFamily="monospace"
+                    >
+                      NIT Rourkela Campus
+                    </text>
+
+                    <text
+                      x="146.5"
+                      y="41"
+                      fill="#7dd3fc"
+                      fontSize="3.3"
+                      fontFamily="monospace"
+                      fontWeight="500"
+                    >
+                      Odisha · 22.26°N 84.90°E
+                    </text>
+                  </g>
+                </g>
+              )}
             </g>
           )}
         </svg>

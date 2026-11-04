@@ -99,7 +99,7 @@ export default function Contact() {
       const body = encodeURIComponent(
         `Name: ${safeData.name}\nEmail: ${safeData.email}\nOrganization: ${safeData.organization}\n\nMessage:\n${safeData.message}`
       );
-      window.location.href = `mailto:hello@akashvahini.in?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:assist.akashvahini@gmail.com?subject=${subject}&body=${body}`;
       setSubmitted(true);
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export default function Contact() {
                 </a>
 
                 <a
-                  href="mailto:hello@akashvahini.in"
+                  href="mailto:assist.akashvahini@gmail.com"
                   className="flex items-start gap-4 p-4 glass-panel rounded-sm border border-white/10 hover:border-amber/40 transition-colors group"
                 >
                   <div className="w-10 h-10 rounded-sm bg-white/5 flex items-center justify-center text-amber group-hover:bg-amber group-hover:text-navy transition-all">
@@ -151,7 +151,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <div className="text-xs font-mono text-white/40 uppercase">Inquiries &amp; Press</div>
-                    <div className="text-sm font-semibold text-white mt-0.5">hello@akashvahini.in</div>
+                    <div className="text-sm font-semibold text-white mt-0.5">assist.akashvahini@gmail.com</div>
                   </div>
                 </a>
 
@@ -190,7 +190,7 @@ export default function Contact() {
                   <span>
                     {GOOGLE_SHEETS_URL
                       ? 'Thank you! Your mission inquiry has been saved. Our team will contact you shortly.'
-                      : 'Opening your email client to send your message to hello@akashvahini.in'}
+                      : 'Opening your email client to send your message to assist.akashvahini@gmail.com'}
                   </span>
                 </div>
               )}

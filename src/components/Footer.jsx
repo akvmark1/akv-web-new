@@ -27,8 +27,8 @@ export default function Footer() {
             <h4 className="text-xs font-mono text-amber uppercase tracking-wider mb-4">Contact</h4>
             <div className="space-y-2 text-xs text-white/70">
               <div>
-                <a href="mailto:hello@akashvahini.in" className="hover:text-amber transition-colors">
-                  hello@akashvahini.in
+                <a href="mailto:assist.akashvahini@gmail.com" className="hover:text-amber transition-colors">
+                  assist.akashvahini@gmail.com
                 </a>
               </div>
               <div>

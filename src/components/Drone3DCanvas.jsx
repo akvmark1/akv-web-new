@@ -4,17 +4,6 @@ import * as THREE from 'three';
 
 const COMPANY_COORDINATES = '22.255471° N / 84.903671° E';
 
-function latitudeLongitudeToVector3(latitude, longitude, radius) {
-  const lat = THREE.MathUtils.degToRad(latitude);
-  const lon = THREE.MathUtils.degToRad(longitude);
-
-  return new THREE.Vector3(
-    radius * Math.cos(lat) * Math.sin(lon),
-    radius * Math.sin(lat),
-    radius * Math.cos(lat) * Math.cos(lon)
-  );
-}
-
 function SpaceParticles({ count = 180 }) {
   const pointsRef = useRef();
   const positions = useMemo(() => {
@@ -51,52 +40,9 @@ function SpaceParticles({ count = 180 }) {
   );
 }
 
-function TargetMarker({ progress }) {
-  const markerRef = useRef();
-  const pulseRef = useRef();
-  const markerPosition = useMemo(
-    () => latitudeLongitudeToVector3(22.255471, 84.903671, 1.65),
-    []
-  );
-
-  useFrame((state, delta) => {
-    const targetOpacity = THREE.MathUtils.smoothstep(progress, 0.55, 0.9);
-    const pulse = 1 + Math.sin(state.clock.elapsedTime * 4) * 0.12;
-
-    if (markerRef.current) {
-      markerRef.current.scale.setScalar(0.7 + targetOpacity * 0.5);
-      markerRef.current.position.lerp(markerPosition, 0.08);
-      markerRef.current.visible = targetOpacity > 0.01;
-    }
-
-    if (pulseRef.current) {
-      pulseRef.current.scale.setScalar(pulse);
-      pulseRef.current.material.opacity = targetOpacity * 0.45;
-    }
-
-    if (markerRef.current) {
-      markerRef.current.rotation.y += delta * 1.2;
-    }
-  });
-
-  return (
-    <group ref={markerRef} position={markerPosition}>
-      <mesh>
-        <sphereGeometry args={[0.055, 16, 16]} />
-        <meshBasicMaterial color="#f2a93b" />
-      </mesh>
-      <mesh ref={pulseRef}>
-        <ringGeometry args={[0.11, 0.13, 32]} />
-        <meshBasicMaterial
-          color="#f2a93b"
-          transparent
-          opacity={0}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-    </group>
-  );
-}
+// Initial angles to orient India (~79° E, 21° N) directly facing the camera
+const INDIA_ROT_Y = -2.95;
+const INDIA_ROT_X = 0.28;
 
 function EarthScene({ progress }) {
   const earthTexture = useLoader(THREE.TextureLoader, '/textures/earth_atmos_2048.jpg');
@@ -122,10 +68,11 @@ function EarthScene({ progress }) {
     const globeOpacity = 1 - THREE.MathUtils.smoothstep(p, 0.22, 0.62);
 
     if (earthRef.current) {
-      earthRef.current.rotation.y += delta * (0.08 + p * 0.1);
+      // Rotation starts from India and gently rotates eastward
+      earthRef.current.rotation.y += delta * (0.05 + p * 0.08);
       earthRef.current.rotation.x = THREE.MathUtils.lerp(
         earthRef.current.rotation.x,
-        -0.12 + handoff * 0.18,
+        INDIA_ROT_X - handoff * 0.15,
         0.04
       );
       earthRef.current.position.z = -handoff * 0.65;
@@ -158,7 +105,7 @@ function EarthScene({ progress }) {
       <directionalLight position={[-4, 2, 5]} intensity={2.3} color="#dceaff" />
       <directionalLight position={[4, -2, -4]} intensity={0.5} color="#f2a93b" />
 
-      <group ref={earthRef}>
+      <group ref={earthRef} rotation={[INDIA_ROT_X, INDIA_ROT_Y, 0]}>
         <mesh>
           <sphereGeometry args={[1.6, 96, 96]} />
           <meshPhongMaterial
@@ -196,7 +143,6 @@ function EarthScene({ progress }) {
         />
       </mesh>
 
-      <TargetMarker progress={progress} />
       <SpaceParticles />
     </>
   );
@@ -774,7 +720,7 @@ function FallbackScene({ progress }) {
           transform: `translate(-50%, -50%) scale(${1 + progress * 0.4})`,
           backgroundImage: "url('/textures/earth_atmos_2048.jpg')",
           backgroundSize: 'auto 100%',
-          backgroundPosition: `${progress * 34}% center`,
+          backgroundPosition: `${72 + progress * 34}% center`,
           animation: 'globe-spin 24s linear infinite',
         }}
       >
@@ -817,7 +763,7 @@ class WebGLSceneBoundary extends React.Component {
   }
 }
 
-export default function Drone3DCanvas({ progress = 0, className = '', showMap = true }) {
+export default function Drone3DCanvas({ progress = 0, className = '', showMap = false }) {
   const [webGLAvailable] = useState(() => {
     const canvas = document.createElement('canvas');
     const context =
@@ -825,16 +771,6 @@ export default function Drone3DCanvas({ progress = 0, className = '', showMap = 
       canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true });
     return Boolean(context);
   });
-
-  const stage = showMap
-    ? progress < 0.28
-      ? 'global tracking'
-      : progress < 0.66
-        ? 'regional handoff'
-        : 'target locked'
-    : progress < 0.6
-      ? 'global tracking'
-      : 'orbital handoff';
 
   return (
     <div className={`w-full h-full min-h-[420px] md:min-h-[520px] relative pointer-events-none ${className}`}>
@@ -846,38 +782,6 @@ export default function Drone3DCanvas({ progress = 0, className = '', showMap = 
         <FallbackScene progress={progress} />
       )}
       {showMap && <IndiaMapOverlay progress={progress} />}
-      <div className="absolute inset-x-4 top-5 flex items-start justify-between font-mono text-[9px] tracking-[0.18em] text-white/45 uppercase">
-        <div>
-          <div className="text-amber/80">Orbital intelligence // 001</div>
-          <div className="mt-1 text-white/30">Live visual telemetry</div>
-        </div>
-        <div className="text-right">
-          <div className="text-accentgreen">● Link stable</div>
-          <div className="mt-1 text-white/30">{stage}</div>
-        </div>
-      </div>
-      <div className="absolute inset-x-4 bottom-4 flex items-end justify-between font-mono text-[9px] tracking-wider text-white/45 uppercase">
-        <div>
-          <div className="text-white/30">Coordinates</div>
-          <div className="mt-1 text-amber/90">
-            {showMap && progress > 0.58 ? COMPANY_COORDINATES : '34.1526° N / 118.2437° W'}
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="mb-2 text-white/30">Scroll to trace</div>
-          <div className="flex gap-1">
-            {[0, 1, 2, 3, 4].map((tick) => (
-              <span
-                key={tick}
-                className={`h-1 w-5 transition-colors duration-500 ${
-                  progress >= tick / 4 ? 'bg-amber' : 'bg-white/15'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="absolute left-1/2 top-1/2 h-[72%] w-[72%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 pointer-events-none" />
     </div>
   );
 }

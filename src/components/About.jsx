@@ -43,7 +43,7 @@ export default function About() {
   ];
 
   return (
-    <section id="about" ref={aboutRef} className="py-24 bg-navy relative border-t border-white/10 overflow-hidden">
+    <section id="about" className="py-24 bg-navy relative border-t border-white/10 overflow-hidden">
       {/* Background radial accent */}
       <div className="absolute top-1/4 right-0 w-80 h-80 bg-amber/5 rounded-full blur-3xl pointer-events-none" />
 

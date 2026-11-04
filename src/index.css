@@ -62,22 +62,6 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(16, 18, 20, 0.08);
 }
 
-/* Radar pulse animation */
-@keyframes radar-pulse {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-}
-
 @keyframes globe-spin {
   from {
     background-position: 0% center;
@@ -85,10 +69,6 @@ h1, h2, h3, h4, h5, h6 {
   to {
     background-position: 100% center;
   }
-}
-
-.radar-glow {
-  animation: radar-pulse 3s infinite ease-in-out;
 }
 
 /* Custom scrollbar */

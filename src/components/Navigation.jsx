@@ -111,7 +111,7 @@ export default function Navigation() {
           {/* Mobile Hamburger Toggle — visible below md */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-white/80 hover:text-white p-2 focus:outline-none flex-shrink-0"
+            className="md:hidden text-white/80 hover:text-white p-2.5 focus:outline-none flex-shrink-0"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -126,12 +126,11 @@ export default function Navigation() {
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 border-b border-white/5 flex items-center justify-between ${
+                className={`text-base font-medium py-3 border-b border-white/5 ${
                   activeSection === link.id ? 'text-amber' : 'text-white/80'
                 }`}
               >
                 <span>{link.name}</span>
-                <span className="text-xs font-mono text-white/30">#{link.id}</span>
               </a>
             ))}
             <a

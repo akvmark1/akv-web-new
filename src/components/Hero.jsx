@@ -57,7 +57,8 @@ export default function Hero() {
           <div className="lg:col-span-7 flex flex-col items-start pt-6">
             {/* Main Title */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-bold text-white tracking-tight leading-[1.08] mb-6">
-              Where intelligence <br />
+              Where intelligence{' '}
+              <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber via-amber-glow to-white">
                 meets the sky.
               </span>
@@ -112,9 +113,9 @@ export default function Hero() {
           {stats.map((s, index) => (
             <div
               key={index}
-              className={`flex flex-col ${
-                index !== stats.length - 1 ? 'md:border-r md:border-white/10' : ''
-              } px-2 md:px-4`}
+              className={`flex flex-col px-2 md:px-4 ${
+                index < 2 ? 'border-b border-white/10 pb-4 md:pb-0 md:border-b-0' : ''
+              } ${index !== stats.length - 1 ? 'md:border-r md:border-white/10' : ''}`}
             >
               <span className="font-display font-bold text-2xl md:text-3xl text-white tracking-tight flex items-baseline gap-1">
                 {s.value}

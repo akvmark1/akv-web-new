@@ -450,7 +450,7 @@ export function IndiaMapPanel() {
         const t6 = setTimeout(() => setPhase(5), 1600);
         const t7 = setTimeout(() => setPhase(6), 1950);
 
-        return () => [t2, t3, t4, t6, t7].forEach(clearTimeout);
+        return () => [t2, t3, t4, t5, t6, t7].forEach(clearTimeout);
       },
       { threshold: 0.22 }
     );

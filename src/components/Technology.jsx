@@ -3,7 +3,6 @@ import {
   Activity,
   Compass,
   Cpu,
-  Database,
   Radio,
   Wifi,
   BatteryCharging,
@@ -11,10 +10,6 @@ import {
   CheckCircle,
   Eye,
   Sliders,
-  Terminal,
-  Shield,
-  Layers,
-  Crosshair,
 } from 'lucide-react';
 
 /**
@@ -29,7 +24,6 @@ const MISSIONS = [
     code: 'CANOPY SURVEY',
     src: '/videos/AKVD1.mp4',
     sector: 'FOREST SECTOR 7 · CANOPY ANALYSIS',
-    linkedSubsystems: ['Computer Vision', 'Neural Processor'],
     telemetry: {
       baseAlt: 48.5,
       baseSpeed: 28.4,
@@ -55,7 +49,6 @@ const MISSIONS = [
     code: 'GRID MAPPING',
     src: '/videos/AKVD2.mp4',
     sector: 'TERRAIN SECTOR 4 · 3D ELEVATION PASS',
-    linkedSubsystems: ['Flight Control', 'Inference Engine'],
     telemetry: {
       baseAlt: 115.0,
       baseSpeed: 42.0,
@@ -81,7 +74,6 @@ const MISSIONS = [
     code: 'FPV PATROL',
     src: '/videos/AKVD3.mp4',
     sector: 'JUNGLE CORRIDOR · RAPID PERIMETER RUN',
-    linkedSubsystems: ['Companion Compute', 'Messaging Middleware'],
     telemetry: {
       baseAlt: 24.2,
       baseSpeed: 64.8,
@@ -137,42 +129,42 @@ export default function Technology() {
     {
       name: 'PX4 Autopilot',
       category: 'Flight Control',
-      desc: 'Industry standard open-source flight stack providing redundant inertial sensing and waypoint navigation.',
+      desc: 'Keeps SEERIA precisely on course — through turbulence, terrain, and total autonomy.',
     },
     {
       name: 'Raspberry Pi 5',
       category: 'Companion Compute',
-      desc: 'High-speed quad-core onboard companion processor coordinating communications, vision, and system bus.',
+      desc: 'The nerve centre onboard — orchestrating every sensor, feed, and decision in real time.',
     },
     {
       name: 'Hailo AI Acceleration',
       category: 'Neural Processor',
-      desc: '26 TOPS dedicated deep-learning accelerator running neural models with sub-10ms inference latency.',
+      desc: 'Sees, thinks, and acts — before a human could blink.',
     },
     {
       name: 'Sony IMX500 Sensor',
       category: 'Computer Vision',
-      desc: 'Intelligent vision sensor with on-chip AI processing for immediate edge object tracking and classification.',
+      desc: 'Eyes that never blink, never miss, and never need the cloud to understand what they see.',
     },
     {
       name: 'MAVLink Telemetry',
       category: 'Protocol',
-      desc: 'Bi-directional encrypted message protocol transferring packetized telemetry between UAV and ground base.',
+      desc: 'A hardened, encrypted conversation between sky and ground — always.',
     },
     {
       name: 'ONNX AI Models',
       category: 'Inference Engine',
-      desc: 'Optimized neural weights for real-time person detection, thermal hotspot spotting, and structural defect mapping.',
+      desc: 'Trained to spot what matters — people, heat, and structural failure — before it\'s too late.',
     },
     {
       name: 'ZeroMQ Data Bridge',
       category: 'Messaging Middleware',
-      desc: 'Ultra low-latency socket architecture distributing high-throughput camera frames and sensor streams.',
+      desc: 'Moves data at the speed of flight — without a single frame dropped.',
     },
     {
       name: 'SQLite Onboard Storage',
       category: 'Mission Blackbox',
-      desc: 'Local structured database logging complete telemetry, mission markers, and flight history.',
+      desc: 'Every second of every mission, recorded and preserved — no matter what happens next.',
     },
   ];
 
@@ -216,7 +208,7 @@ export default function Technology() {
               <span className="flex items-center gap-1">
                 <BatteryCharging className="w-3.5 h-3.5 text-amber" /> {activeMission.telemetry.battery}%
               </span>
-              <span className="text-amber bg-amber/10 px-2 py-0.5 rounded border border-amber/20 font-medium">
+              <span className="text-amber bg-amber/10 px-2 py-0.5 rounded border border-amber/20 font-medium truncate max-w-[140px] sm:max-w-none">
                 {activeMission.payloadStatus}
               </span>
             </div>
@@ -241,12 +233,13 @@ export default function Technology() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-navy' : 'bg-amber/60'}`} />
-                    <span>FEED {idx + 1}: {m.code}</span>
+                    <span className="sm:hidden">F{idx + 1}</span>
+                    <span className="hidden sm:inline">FEED {idx + 1}: {m.code}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="text-[11px] font-mono text-white/40 flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-white/40">
               <Eye className="w-3.5 h-3.5 text-amber/80" />
               <span>SYNCED MISSION MODE · AUTO-CYCLE 14s</span>
             </div>
@@ -256,7 +249,7 @@ export default function Technology() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-5">
 
             {/* Video Feed — with GCS HUD overlay */}
-            <div className="lg:col-span-8 bg-black rounded border border-white/10 flex flex-col min-h-[340px] relative overflow-hidden">
+            <div className="lg:col-span-8 bg-black rounded border border-white/10 flex flex-col min-h-[220px] sm:min-h-[300px] lg:min-h-[340px] relative overflow-hidden">
 
               {/* Top bar — Dynamically Linked to Active Mission Sector & Resolution */}
               <div className="flex items-center justify-between px-4 pt-3 pb-2 text-xs font-mono z-20 bg-black/75 backdrop-blur-sm border-b border-white/10">
@@ -271,7 +264,7 @@ export default function Technology() {
               </div>
 
               {/* Native HTML5 video */}
-              <div className="relative flex-1 min-h-[260px] bg-black">
+              <div className="relative flex-1 min-h-[160px] sm:min-h-[220px] lg:min-h-[260px] bg-black">
                 {videoError ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#060f1a] gap-3">
                     <div className="w-20 h-20 rounded-full border border-amber/20 flex items-center justify-center">
@@ -402,21 +395,6 @@ export default function Technology() {
                   ))}
                 </div>
               </div>
-
-              {/* Active Subsystem Indicator */}
-              <div className="p-3 bg-amber/5 rounded border border-amber/20 font-mono text-xs">
-                <div className="text-amber/90 font-semibold mb-1 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-amber" />
-                  <span>ENGAGED ARCHITECTURE</span>
-                </div>
-                <p className="text-[11px] text-white/60">
-                  Active pipeline powered by{' '}
-                  <span className="text-amber font-medium">
-                    {activeMission.linkedSubsystems.join(' + ')}
-                  </span>
-                  .
-                </p>
-              </div>
             </div>
           </div>
 
@@ -437,45 +415,32 @@ export default function Technology() {
               What's inside SEERIA.
             </h3>
             <p className="mt-2 text-white/60 text-sm">
-              A carefully chosen hardware and software stack built for real-time perception and reliable flight. Modules currently engaged in <span className="text-amber font-mono">{activeMission.id}</span> are highlighted below.
+              A proprietary hardware and software architecture — purpose-built for perception, autonomy, and reliability at the edge.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {techStack.map((tech, i) => {
-              const isEngaged = activeMission.linkedSubsystems.includes(tech.category);
-              return (
-                <div
-                  key={i}
-                  className={`glass-panel p-6 rounded-sm border transition-all duration-300 group flex flex-col justify-between ${
-                    isEngaged
-                      ? 'border-amber/60 bg-amber/[0.04] shadow-lg shadow-amber/10 ring-1 ring-amber/30'
-                      : 'border-white/10 hover:border-amber/40'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-mono text-amber uppercase tracking-wider">
-                        {tech.category}
-                      </span>
-                      {isEngaged && (
-                        <span className="text-[9px] font-mono bg-amber text-navy px-1.5 py-0.5 rounded font-bold">
-                          ACTIVE
-                        </span>
-                      )}
-                    </div>
-                    <h4 className="text-base font-bold text-white mb-2 group-hover:text-amber transition-colors">
-                      {tech.name}
-                    </h4>
-                    <p className="text-xs text-white/60 leading-relaxed">{tech.desc}</p>
+            {techStack.map((tech, i) => (
+              <div
+                key={i}
+                className="glass-panel p-6 rounded-sm border border-white/10 hover:border-amber/40 transition-all duration-300 group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="mb-1">
+                    <span className="text-[11px] font-mono text-amber uppercase tracking-wider">
+                      {tech.category}
+                    </span>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-white/30">
-                    <span>SUBSYSTEM &middot; LEVEL 1</span>
-                    {isEngaged && <span className="text-amber font-medium">LINKED</span>}
-                  </div>
+                  <h4 className="text-base font-bold text-white mb-2 group-hover:text-amber transition-colors">
+                    {tech.name}
+                  </h4>
+                  <p className="text-xs text-white/60 leading-relaxed">{tech.desc}</p>
                 </div>
-              );
-            })}
+                <div className="mt-4 pt-3 border-t border-white/5 text-[10px] font-mono text-white/30">
+                  <span>SUBSYSTEM &middot; LEVEL 1</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

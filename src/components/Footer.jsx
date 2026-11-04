@@ -1,7 +1,7 @@
 import React from 'react';
+import AkvLogo from './AkvLogo';
 
 export default function Footer() {
-
   return (
     <footer className="bg-navy border-t border-white/10 pt-16 pb-12 text-white">
       <div className="max-w-[1240px] mx-auto px-6 md:px-10">
@@ -9,9 +9,11 @@ export default function Footer() {
           {/* Brand info */}
           <div className="lg:col-span-4 flex flex-col justify-between">
             <div>
-              <a href="#hero" className="font-display font-bold text-xl tracking-wider flex items-center gap-1.5">
-                <span>AKASH</span>
-                <span className="text-amber">VAHINI</span>
+              <a href="#hero" className="font-magz text-2xl sm:text-3xl md:text-4xl flex items-center gap-3 group">
+                <AkvLogo className="w-9 h-9 sm:w-10 sm:h-10 object-contain transition-transform duration-200 group-hover:scale-105 flex-shrink-0" />
+                <div className="font-magz flex items-center">
+                  <span>akash</span><span className="text-amber">vahini</span>
+                </div>
               </a>
               <p className="mt-4 text-xs text-white/60 leading-relaxed max-w-sm">
                 AI-powered drone systems for a safer and smarter tomorrow &mdash; engineered for high-stakes missions from disaster response to national infrastructure monitoring.
@@ -27,8 +29,8 @@ export default function Footer() {
             <h4 className="text-xs font-mono text-amber uppercase tracking-wider mb-4">Contact</h4>
             <div className="space-y-2 text-xs text-white/70">
               <div>
-                <a href="mailto:hello@akashvahini.in" className="hover:text-amber transition-colors">
-                  hello@akashvahini.in
+                <a href="mailto:assist.akashvahini@gmail.com" className="hover:text-amber transition-colors">
+                  assist.akashvahini@gmail.com
                 </a>
               </div>
               <div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ShieldCheck, Cpu } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Drone3DCanvas from './Drone3DCanvas';
 
 export default function Hero() {
@@ -7,19 +7,31 @@ export default function Hero() {
   const [sceneProgress, setSceneProgress] = useState(0);
 
   useEffect(() => {
+    let ticking = false;
+
     const updateSceneProgress = () => {
       if (!heroRef.current) return;
 
       const { top, height } = heroRef.current.getBoundingClientRect();
       const progress = (window.innerHeight * 0.14 - top) / Math.max(height * 0.78, 1);
       setSceneProgress(Math.min(1, Math.max(0, progress)));
+      ticking = false;
     };
 
-    window.addEventListener('scroll', updateSceneProgress, { passive: true });
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateSceneProgress);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', updateSceneProgress);
 
+    updateSceneProgress();
+
     return () => {
-      window.removeEventListener('scroll', updateSceneProgress);
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', updateSceneProgress);
     };
   }, []);
@@ -47,7 +59,6 @@ export default function Hero() {
         <Drone3DCanvas
           progress={sceneProgress}
           className="md:translate-x-[18%]"
-          showMap={false}
         />
       </div>
 
@@ -55,9 +66,10 @@ export default function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Headlines & Actions */}
           <div className="lg:col-span-7 flex flex-col items-start pt-6">
-            {/* Main Title */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-bold text-white tracking-tight leading-[1.08] mb-6">
-              Where intelligence <br />
+            {/* Main Title in MAGZ */}
+            <h1 className="font-magz text-4xl sm:text-5xl md:text-6xl lg:text-[72px] text-white leading-[1.12] mb-6">
+              Where intelligence{' '}
+              <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber via-amber-glow to-white">
                 meets the sky.
               </span>
@@ -71,9 +83,10 @@ export default function Hero() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 mb-10 w-full sm:w-auto">
+              {/* "Book a call" is visible only on small screens where the header button is collapsed into the hamburger menu */}
               <a
                 href="#contact"
-                className="w-full sm:w-auto px-7 py-3.5 bg-amber text-navy font-semibold text-sm rounded-sm hover:bg-amber-glow transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg shadow-amber/20 text-center"
+                className="md:hidden w-full sm:w-auto px-7 py-3.5 bg-amber text-navy font-semibold text-sm rounded-sm hover:bg-amber-glow transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg shadow-amber/20 text-center"
               >
                 Book a call
               </a>
@@ -81,25 +94,14 @@ export default function Hero() {
                 href="#product"
                 className="w-full sm:w-auto px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium text-sm rounded-sm transition-all duration-200 flex items-center justify-center gap-2 group"
               >
-                <span>Explore SEERIA</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white/90">Explore</span>
+                  <span className="font-magz text-xl sm:text-2xl text-white group-hover:text-amber transition-colors leading-none inline-block">
+                    seeria
+                  </span>
+                </span>
                 <ArrowRight className="w-4 h-4 text-amber group-hover:translate-x-1 transition-transform" />
               </a>
-            </div>
-
-            {/* Incubation Badges */}
-            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-white/10 text-xs text-white/60 font-mono">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-accentgreen" />
-                <span>FTBI &middot; NIT Rourkela</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-amber" />
-                <span>DPIIT Startup Program</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber/70" />
-                <span>MeitY Genesis EIR 2.0</span>
-              </div>
             </div>
           </div>
 
@@ -112,11 +114,11 @@ export default function Hero() {
           {stats.map((s, index) => (
             <div
               key={index}
-              className={`flex flex-col ${
-                index !== stats.length - 1 ? 'md:border-r md:border-white/10' : ''
-              } px-2 md:px-4`}
+              className={`flex flex-col px-2 md:px-4 ${
+                index < 2 ? 'border-b border-white/10 pb-4 md:pb-0 md:border-b-0' : ''
+              } ${index !== stats.length - 1 ? 'md:border-r md:border-white/10' : ''}`}
             >
-              <span className="font-display font-bold text-2xl md:text-3xl text-white tracking-tight flex items-baseline gap-1">
+              <span className="font-magz text-3xl sm:text-4xl md:text-5xl lg:text-[50px] text-white flex items-baseline gap-2">
                 {s.value}
               </span>
               <span className="text-xs md:text-sm font-semibold text-amber mt-0.5">

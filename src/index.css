@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'Magz';
+  src: url('/fonts/Magz.otf') format('opentype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+.font-magz {
+  font-family: 'Magz', 'Space Grotesk', sans-serif !important;
+  letter-spacing: 0.02em !important;
+}
+
+@keyframes akv-square-blink {
+  0%, 100% {
+    opacity: 0.15;
+    filter: drop-shadow(0 0 0px #FFDE59);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #FFDE59);
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,7 +61,12 @@ body {
   overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
   letter-spacing: -0.015em;
@@ -55,53 +84,21 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.glass-panel-light {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(16, 18, 20, 0.08);
-}
-
-/* Radar pulse animation */
-@keyframes radar-pulse {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-}
-
-@keyframes globe-spin {
-  from {
-    background-position: 0% center;
-  }
-  to {
-    background-position: 100% center;
-  }
-}
-
-.radar-glow {
-  animation: radar-pulse 3s infinite ease-in-out;
-}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: #0a0e14;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #252e3d;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #f2a93b;
 }

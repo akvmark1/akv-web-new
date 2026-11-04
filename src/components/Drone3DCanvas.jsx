@@ -2,8 +2,6 @@ import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const COMPANY_COORDINATES = '22.255471° N / 84.903671° E';
-
 function SpaceParticles({ count = 180 }) {
   const pointsRef = useRef();
   const positions = useMemo(() => {
@@ -66,30 +64,46 @@ function EarthScene({ progress }) {
     const p = smoothProgress.current;
     const handoff = THREE.MathUtils.smoothstep(p, 0.16, 0.68);
     const globeOpacity = 1 - THREE.MathUtils.smoothstep(p, 0.22, 0.62);
+    const isVisible = globeOpacity > 0.01;
 
     if (earthRef.current) {
-      // Rotation starts from India and gently rotates eastward
-      earthRef.current.rotation.y += delta * (0.05 + p * 0.08);
-      earthRef.current.rotation.x = THREE.MathUtils.lerp(
-        earthRef.current.rotation.x,
-        INDIA_ROT_X - handoff * 0.15,
-        0.04
-      );
-      earthRef.current.position.z = -handoff * 0.65;
-      earthRef.current.scale.setScalar(1 + handoff * 0.42);
+      earthRef.current.visible = isVisible;
+      if (isVisible) {
+        // Ambient subtle idle sway (±7°) keeping India directly in view at Hero
+        const idleWobble = Math.sin(state.clock.elapsedTime * 0.35) * 0.12;
+        // Rotation begins at India, turns with scroll, and smoothly returns to India whenever returning to Hero
+        const targetRotY = INDIA_ROT_Y + idleWobble + p * 1.35;
+        earthRef.current.rotation.y = THREE.MathUtils.damp(
+          earthRef.current.rotation.y,
+          targetRotY,
+          3.5,
+          delta
+        );
+        earthRef.current.rotation.x = THREE.MathUtils.damp(
+          earthRef.current.rotation.x,
+          INDIA_ROT_X - handoff * 0.15,
+          3.5,
+          delta
+        );
+        earthRef.current.position.z = -handoff * 0.65;
+        earthRef.current.scale.setScalar(1 + handoff * 0.42);
+      }
     }
 
-    if (earthMaterialRef.current) {
+    if (earthMaterialRef.current && isVisible) {
       earthMaterialRef.current.opacity = Math.max(globeOpacity, 0.02);
     }
 
-    if (cloudMaterialRef.current) {
+    if (cloudMaterialRef.current && isVisible) {
       cloudMaterialRef.current.opacity = Math.max(globeOpacity * 0.25, 0.02);
     }
 
     if (glowRef.current) {
-      glowRef.current.scale.setScalar(1 + handoff * 0.46);
-      glowRef.current.material.opacity = 0.12 * globeOpacity;
+      glowRef.current.visible = isVisible;
+      if (isVisible) {
+        glowRef.current.scale.setScalar(1 + handoff * 0.46);
+        glowRef.current.material.opacity = 0.12 * globeOpacity;
+      }
     }
 
     state.camera.position.lerp(
@@ -156,6 +170,25 @@ const MAP_BOUNDS = {
   minLatitude: 6,
   maxLatitude: 37.5,
 };
+const MAP_GRATICULE_LATS = [
+  { lat: 10, label: '10°N' },
+  { lat: 15, label: '15°N' },
+  { lat: 20, label: '20°N' },
+  { lat: 25, label: '25°N' },
+  { lat: 30, label: '30°N' },
+  { lat: 35, label: '35°N' },
+];
+
+const MAP_GRATICULE_LONS = [
+  { lon: 72, label: '72°E' },
+  { lon: 76, label: '76°E' },
+  { lon: 80, label: '80°E' },
+  { lon: 84, label: '84°E' },
+  { lon: 88, label: '88°E' },
+  { lon: 92, label: '92°E' },
+  { lon: 96, label: '96°E' },
+];
+
 
 function projectMapPoint(longitude, latitude) {
   return {
@@ -238,151 +271,6 @@ const NEIGHBOR_LABELS = [
   { name: 'ANDHRA P.',    lon: 79.3, lat: 15.6 },
 ];
 
-// ─── IndiaMapOverlay — used inside Hero Drone3DCanvas ────────────────────────
-
-export function IndiaMapOverlay({ progress, compact = false }) {
-  const [mapData, setMapData] = useState(null);
-  const mapId = useId().replace(/:/g, '');
-  const mapOpacity = THREE.MathUtils.smoothstep(progress, 0.24, 0.66);
-  const mapScale = 0.72 + mapOpacity * 0.28;
-  const target = projectMapPoint(84.903671, 22.255471);
-  const mapSize = compact
-    ? 'w-[180px] h-[220px] sm:w-[195px] sm:h-[235px]'
-    : 'w-[260px] h-[320px] md:w-[300px] md:h-[360px]';
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch('/maps/india-states-simplified.json')
-      .then((r) => (r.ok ? r.json() : { features: [] }))
-      .then((data) => {
-        if (!cancelled) setMapData(data);
-      })
-      .catch(() => {
-        if (!cancelled) setMapData({ features: [] });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return (
-    <div
-      className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-500"
-      style={{ opacity: mapOpacity }}
-      aria-hidden="true"
-    >
-      <div
-        className={`relative ${mapSize} transition-transform duration-700`}
-        style={{ transform: `scale(${mapScale})` }}
-      >
-        <svg
-          className="absolute inset-0 w-full h-full overflow-visible"
-          viewBox="0 0 220 280"
-          role="img"
-          aria-label="India location tracking map"
-        >
-          <defs>
-            <radialGradient id={`${mapId}-terrain`} cx="55%" cy="48%" r="65%">
-              <stop offset="0%" stopColor="#1a3828" stopOpacity="0.18" />
-              <stop offset="50%" stopColor="#0d1b2a" stopOpacity="0" />
-              <stop offset="100%" stopColor="#071220" stopOpacity="0.22" />
-            </radialGradient>
-            <pattern id={`${mapId}-grid`} width="14" height="14" patternUnits="userSpaceOnUse">
-              <path d="M 14 0 L 0 0 0 14" fill="none" stroke="#f2a93b" strokeWidth="0.3" opacity="0.3" />
-            </pattern>
-            <filter id={`${mapId}-glow`}>
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id={`${mapId}-pinGlow`} x="-80%" y="-80%" width="260%" height="260%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-terrain)`} />
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.42" />
-
-          {mapData?.features.map((feature) => {
-            const name = feature.properties?.NAME_1 ?? '';
-            const style = getStateStyle(name);
-            return (
-              <path
-                key={name}
-                d={geometryToPath(feature.geometry)}
-                fill={style.fill}
-                fillOpacity={style.fillOpacity}
-                stroke={style.stroke}
-                strokeWidth={style.strokeWidth}
-                strokeLinejoin="round"
-                filter={style.glow ? `url(#${mapId}-glow)` : undefined}
-              />
-            );
-          })}
-
-          {/* Crosshair arms */}
-          <line x1={target.x - 11} y1={target.y} x2={target.x - 6} y2={target.y} stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-          <line x1={target.x + 6}  y1={target.y} x2={target.x + 11} y2={target.y} stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-          <line x1={target.x} y1={target.y - 11} x2={target.x} y2={target.y - 6}  stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-          <line x1={target.x} y1={target.y + 6}  x2={target.x} y2={target.y + 11} stroke="#f2a93b" strokeWidth="0.8" opacity="0.85" />
-
-          {/* Pin dot */}
-          <circle cx={target.x} cy={target.y} r="4.5" fill="#f2a93b" filter={`url(#${mapId}-pinGlow)`} />
-          <circle cx={target.x} cy={target.y} r="2"   fill="#fff" />
-
-          {/* Pulse rings */}
-          <circle cx={target.x} cy={target.y} r="6" fill="none" stroke="#f2a93b" strokeWidth="0.8">
-            <animate attributeName="r" values="6;22;6" dur="2.2s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.8;0;0.8" dur="2.2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx={target.x} cy={target.y} r="6" fill="none" stroke="#f2a93b" strokeWidth="0.6">
-            <animate attributeName="r" values="5;14;5" dur="2.2s" begin="0.55s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.6;0;0.6" dur="2.2s" begin="0.55s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Leader dashed line */}
-          <line
-            x1={target.x}
-            y1={target.y - 4}
-            x2={Math.min(target.x + 38, 208)}
-            y2={target.y - 18}
-            stroke="#f2a93b"
-            strokeWidth="0.8"
-            strokeDasharray="2 3"
-          />
-        </svg>
-
-        {compact ? (
-          <div className="absolute inset-x-0 bottom-1 text-center">
-            <div className="font-mono text-[9px] tracking-[0.12em] text-amber/85">{COMPANY_COORDINATES}</div>
-          </div>
-        ) : (
-          <div
-            className="absolute translate-x-3 -translate-y-[calc(50%+18px)] whitespace-nowrap text-left"
-            style={{
-              left: `${Math.min((target.x / 220) * 100 + 14, 68)}%`,
-              top: `${(target.y / 280) * 100}%`,
-            }}
-          >
-            <div className="h-px w-14 bg-amber/70 mb-2" />
-            <div className="font-mono text-[9px] tracking-[0.22em] text-amber uppercase">Odisha / target locked</div>
-            <div className="font-mono text-[10px] text-white/75 mt-1">{COMPANY_COORDINATES}</div>
-            <div className="text-[11px] text-white/50 mt-1">TIIR · NIT Rourkela</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── IndiaMapPanel — About section, full animated version ────────────────────
 
 /**
@@ -398,16 +286,24 @@ export function IndiaMapOverlay({ progress, compact = false }) {
  *   t=1600ms phase 5 — HQ info card + status dot slide in
  *   t=1950ms phase 6 — HUD corner brackets fade in
  */
+const FULL_COORD = '22.255471° N  /  84.903671° E';
+const CARD_DATA = {
+  tag: 'TARGET ACQUIRED',
+  title: 'AkashVahini HQ',
+  sub: 'NIT Rourkela Campus',
+  coords: 'Odisha · 22.26°N 84.90°E',
+};
+
 export function IndiaMapPanel() {
   const [mapData, setMapData] = useState(null);
   const [phase, setPhase] = useState(0);
   const [coordText, setCoordText] = useState('');
+  const [cardLines, setCardLines] = useState({ tag: '', title: '', sub: '', coords: '' });
+  const [typingStep, setTypingStep] = useState(0);
   const panelRef = useRef(null);
-  const hasAnimated = useRef(false);
   const mapId = useId().replace(/:/g, '');
 
   const target = projectMapPoint(84.903671, 22.255471);
-  const FULL_COORD = '22.255471° N  /  84.903671° E';
 
   // Load GeoJSON
   useEffect(() => {
@@ -425,38 +321,128 @@ export function IndiaMapPanel() {
     };
   }, []);
 
-  // Staggered entry animation on scroll intersection
+  // Performance optimization: Pre-compute and memoize state paths so typewriter re-renders don't re-parse polygons
+  const processedFeatures = useMemo(() => {
+    if (!mapData?.features) return [];
+    return mapData.features.map((feature) => {
+      const name = feature.properties?.NAME_1 ?? '';
+      return {
+        name,
+        d: geometryToPath(feature.geometry),
+        style: getStateStyle(name),
+        isOdisha: /odisha|orissa/i.test(name),
+      };
+    });
+  }, [mapData]);
+
+  // Staggered entry animation on scroll intersection (replays whenever scrolled into view)
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
 
+    const timers = [];
+    const intervals = [];
+
+    const safeTimeout = (fn, delay) => {
+      const id = setTimeout(fn, delay);
+      timers.push(id);
+      return id;
+    };
+
+    const safeInterval = (fn, delay) => {
+      const id = setInterval(fn, delay);
+      intervals.push(id);
+      return id;
+    };
+
+    const clearAll = () => {
+      timers.forEach(clearTimeout);
+      intervals.forEach(clearInterval);
+      timers.length = 0;
+      intervals.length = 0;
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting || hasAnimated.current) return;
-        hasAnimated.current = true;
+        if (!entry.isIntersecting) {
+          clearAll();
+          setPhase(0);
+          setCoordText('');
+          setCardLines({ tag: '', title: '', sub: '', coords: '' });
+          setTypingStep(0);
+          return;
+        }
 
+        // Replay full animation sequence whenever scrolled into view
+        clearAll();
         setPhase(1);
-        const t2 = setTimeout(() => setPhase(2), 350);
-        const t3 = setTimeout(() => setPhase(3), 700);
-        const t4 = setTimeout(() => setPhase(4), 1050);
-        const t5 = setTimeout(() => {
+
+        safeTimeout(() => setPhase(2), 350);
+        safeTimeout(() => setPhase(3), 700);
+        safeTimeout(() => setPhase(4), 1050);
+
+        safeTimeout(() => {
           let i = 0;
-          const tw = setInterval(() => {
+          const tw = safeInterval(() => {
             i += 1;
             setCoordText(FULL_COORD.slice(0, i));
             if (i >= FULL_COORD.length) clearInterval(tw);
           }, 38);
         }, 1260);
-        const t6 = setTimeout(() => setPhase(5), 1600);
-        const t7 = setTimeout(() => setPhase(6), 1950);
 
-        return () => [t2, t3, t4, t6, t7].forEach(clearTimeout);
+        // Sequenced Typewriter for Callout Card Text
+        safeTimeout(() => setPhase(5), 1400);
+
+        safeTimeout(() => {
+          setTypingStep(1);
+          let i1 = 0;
+          const tw1 = safeInterval(() => {
+            i1 += 1;
+            setCardLines((prev) => ({ ...prev, tag: CARD_DATA.tag.slice(0, i1) }));
+            if (i1 >= CARD_DATA.tag.length) {
+              clearInterval(tw1);
+              setTypingStep(2);
+              let i2 = 0;
+              const tw2 = safeInterval(() => {
+                i2 += 1;
+                setCardLines((prev) => ({ ...prev, title: CARD_DATA.title.slice(0, i2) }));
+                if (i2 >= CARD_DATA.title.length) {
+                  clearInterval(tw2);
+                  setTypingStep(3);
+                  let i3 = 0;
+                  const tw3 = safeInterval(() => {
+                    i3 += 1;
+                    setCardLines((prev) => ({ ...prev, sub: CARD_DATA.sub.slice(0, i3) }));
+                    if (i3 >= CARD_DATA.sub.length) {
+                      clearInterval(tw3);
+                      setTypingStep(4);
+                      let i4 = 0;
+                      const tw4 = safeInterval(() => {
+                        i4 += 1;
+                        setCardLines((prev) => ({ ...prev, coords: CARD_DATA.coords.slice(0, i4) }));
+                        if (i4 >= CARD_DATA.coords.length) {
+                          clearInterval(tw4);
+                          setTypingStep(5);
+                        }
+                      }, 20);
+                    }
+                  }, 20);
+                }
+              }, 25);
+            }
+          }, 20);
+        }, 1450);
+
+        safeTimeout(() => setPhase(6), 1900);
       },
-      { threshold: 0.22 }
+      { threshold: 0.18 }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      clearAll();
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -487,19 +473,7 @@ export function IndiaMapPanel() {
         <span className="font-mono text-[8px] text-white/45 tracking-widest uppercase">Live · Operations</span>
       </div>
 
-      {/* HQ info card */}
-      <div
-        className="absolute top-3 right-3 z-20 text-right transition-all duration-500"
-        style={{
-          opacity: phase >= 5 ? 1 : 0,
-          transform: phase >= 5 ? 'translateX(0)' : 'translateX(10px)',
-        }}
-      >
-        <div className="font-mono text-[7px] text-amber/55 tracking-widest uppercase mb-0.5">Target Acquired</div>
-        <div className="font-mono text-[9.5px] text-white/90 font-semibold">AkashVahini HQ</div>
-        <div className="font-mono text-[8px] text-white/55 mt-0.5">NIT Rourkela Campus</div>
-        <div className="font-mono text-[7.5px] text-white/40">Odisha, India</div>
-      </div>
+      {/* HQ info card integrated inside SVG below */}
 
       {/* SVG map */}
       <div
@@ -528,10 +502,6 @@ export function IndiaMapPanel() {
               <stop offset="55%"  stopColor="#f2a93b" stopOpacity="0.1"  />
               <stop offset="100%" stopColor="#f2a93b" stopOpacity="0"    />
             </radialGradient>
-            {/* Tactical grid overlay */}
-            <pattern id={`${mapId}-grid`} width="14" height="14" patternUnits="userSpaceOnUse">
-              <path d="M 14 0 L 0 0 0 14" fill="none" stroke="#f2a93b" strokeWidth="0.22" opacity="0.22" />
-            </pattern>
             {/* State glow (Odisha only) */}
             <filter id={`${mapId}-stateGlow`} x="-15%" y="-15%" width="130%" height="130%">
               <feGaussianBlur stdDeviation="3.5" result="blur" />
@@ -557,7 +527,48 @@ export function IndiaMapPanel() {
           {/* Backgrounds */}
           <rect x="0" y="0" width="220" height="280" fill="#06101a" />
           <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-terrain)`} />
-          <rect x="0" y="0" width="220" height="280" fill={`url(#${mapId}-grid)`} opacity="0.5" />
+
+          {/* Tactical perimeter border frame */}
+          <rect x="0.5" y="0.5" width="219" height="279" fill="none" stroke="#f2a93b" strokeWidth="0.5" opacity="0.28" />
+
+          {/* Concentric Tactical Radar Range Rings around HQ Pin */}
+          <g opacity={phase >= 2 ? 0.45 : 0} style={{ transition: 'opacity 0.6s ease' }}>
+            <circle cx={target.x} cy={target.y} r="26" fill="none" stroke="#f2a93b" strokeWidth="0.35" strokeDasharray="2 3" opacity="0.7" />
+            <circle cx={target.x} cy={target.y} r="54" fill="none" stroke="#38bdf8" strokeWidth="0.3" strokeDasharray="3 4" opacity="0.55" />
+            <circle cx={target.x} cy={target.y} r="88" fill="none" stroke="#38bdf8" strokeWidth="0.25" strokeDasharray="3 5" opacity="0.4" />
+          </g>
+
+          {/* Tactical Micro Crosshairs at quadrant points */}
+          <g stroke="rgba(242,169,59,0.35)" strokeWidth="0.5" opacity={phase >= 1 ? 0.75 : 0}>
+            {/* Top-left */}
+            <path d="M 22 18 L 22 22 M 20 20 L 24 20" />
+            {/* Bottom-left */}
+            <path d="M 22 258 L 22 262 M 20 260 L 24 260" />
+            {/* Bottom-right */}
+            <path d="M 198 258 L 198 262 M 196 260 L 200 260" />
+          </g>
+
+          {/* Border Calibration Ticks (clean edge ticks without crossing lines) */}
+          <g className="geographic-border-ticks" opacity="0.55">
+            {MAP_GRATICULE_LATS.map(({ lat }) => {
+              const y = projectMapPoint(80, lat).y;
+              return (
+                <g key={`lat-tick-${lat}`}>
+                  <line x1="0" y1={y} x2="3.5" y2={y} stroke="#f2a93b" strokeWidth="0.6" />
+                  <line x1="216.5" y1={y} x2="220" y2={y} stroke="#f2a93b" strokeWidth="0.6" />
+                </g>
+              );
+            })}
+            {MAP_GRATICULE_LONS.map(({ lon }) => {
+              const x = projectMapPoint(lon, 20).x;
+              return (
+                <g key={`lon-tick-${lon}`}>
+                  <line x1={x} y1="0" x2={x} y2="3.5" stroke="#f2a93b" strokeWidth="0.6" />
+                  <line x1={x} y1="276.5" x2={x} y2="280" stroke="#f2a93b" strokeWidth="0.6" />
+                </g>
+              );
+            })}
+          </g>
 
           {/* Animated scan line */}
           {phase >= 2 && (
@@ -578,22 +589,19 @@ export function IndiaMapPanel() {
             </line>
           )}
 
-          {/* State paths — terrain-palette fills */}
-          {mapData?.features.map((feature) => {
-            const name = feature.properties?.NAME_1 ?? '';
-            const style = getStateStyle(name);
-            const isOdisha = /odisha|orissa/i.test(name);
-            const visible = isOdisha ? phase >= 3 : phase >= 2;
+          {/* State paths — terrain-palette fills (memoized for 60fps typewriter rendering) */}
+          {processedFeatures.map((item) => {
+            const visible = item.isOdisha ? phase >= 3 : phase >= 2;
             return (
               <path
-                key={name}
-                d={geometryToPath(feature.geometry)}
-                fill={visible ? style.fill : '#0a1825'}
-                fillOpacity={visible ? style.fillOpacity : 0.4}
-                stroke={style.stroke}
-                strokeWidth={style.strokeWidth}
+                key={item.name}
+                d={item.d}
+                fill={visible ? item.style.fill : '#0a1825'}
+                fillOpacity={visible ? item.style.fillOpacity : 0.4}
+                stroke={item.style.stroke}
+                strokeWidth={item.style.strokeWidth}
                 strokeLinejoin="round"
-                filter={style.glow && visible ? `url(#${mapId}-stateGlow)` : undefined}
+                filter={item.style.glow && visible ? `url(#${mapId}-stateGlow)` : undefined}
                 style={{ transition: 'fill 0.65s ease, fill-opacity 0.65s ease' }}
               />
             );
@@ -662,29 +670,188 @@ export function IndiaMapPanel() {
                 <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" begin="0.75s" repeatCount="indefinite" />
               </circle>
 
-              {/* Crosshair arms */}
-              <line x1={target.x - 14} y1={target.y} x2={target.x - 7} y2={target.y} stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
-              <line x1={target.x + 7}  y1={target.y} x2={target.x + 14} y2={target.y} stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
-              <line x1={target.x} y1={target.y - 14} x2={target.x} y2={target.y - 7}  stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
-              <line x1={target.x} y1={target.y + 7}  x2={target.x} y2={target.y + 14} stroke="#f2a93b" strokeWidth="0.9" opacity="0.85" />
+              {/* Rotating tactical reticle ring */}
+              <circle
+                cx={target.x}
+                cy={target.y}
+                r="10"
+                fill="none"
+                stroke="#f2a93b"
+                strokeWidth="0.5"
+                strokeDasharray="4 3"
+                opacity="0.7"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from={`0 ${target.x} ${target.y}`}
+                  to={`360 ${target.x} ${target.y}`}
+                  dur="14s"
+                  repeatCount="indefinite"
+                />
+              </circle>
 
-              {/* Pin dot — outer glow + white core + amber centre */}
-              <circle cx={target.x} cy={target.y} r="5.5" fill="#f2a93b" filter={`url(#${mapId}-pinGlow)`} />
+              {/* Animated Crosshair arms with breathing pulse */}
+              <g>
+                <line x1={target.x - 14} y1={target.y} x2={target.x - 6} y2={target.y} stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+                <line x1={target.x + 6}  y1={target.y} x2={target.x + 14} y2={target.y} stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+                <line x1={target.x} y1={target.y - 14} x2={target.x} y2={target.y - 6}  stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+                <line x1={target.x} y1={target.y + 6}  x2={target.x} y2={target.y + 14} stroke="#f2a93b" strokeWidth="0.9">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                </line>
+              </g>
+
+              {/* Pin dot — glow + core */}
+              <circle cx={target.x} cy={target.y} r="5.5" fill="#f2a93b" filter={`url(#${mapId}-pinGlow)`}>
+                <animate attributeName="opacity" values="0.85;1;0.85" dur="2s" repeatCount="indefinite" />
+              </circle>
               <circle cx={target.x} cy={target.y} r="2.8" fill="#fff" />
               <circle cx={target.x} cy={target.y} r="1.1" fill="#f2a93b" />
 
-              {/* Leader dashed line to top-right info card direction */}
-              <line
-                x1={target.x}
-                y1={target.y - 5}
-                x2={target.x + 34}
-                y2={target.y - 26}
-                stroke="#f2a93b"
-                strokeWidth="0.7"
-                strokeDasharray="2.5 2.5"
-                opacity="0.65"
-              />
-              <circle cx={target.x + 34} cy={target.y - 26} r="1.5" fill="#f2a93b" opacity="0.65" />
+              {/* Integrated Tactical Leader Line & HQ Callout Card with sequenced animations */}
+              {phase >= 4 && (
+                <g className="hq-callout-annotation">
+                  {/* Animated Leader Line from Pin to Shelf */}
+                  <path
+                    d={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                    fill="none"
+                    stroke="#f2a93b"
+                    strokeWidth="1"
+                    strokeDasharray="132"
+                    strokeDashoffset={phase >= 4 ? 0 : 132}
+                    style={{
+                      transition: 'stroke-dashoffset 0.65s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  />
+
+                  {/* Pin anchor dot */}
+                  <circle cx={target.x} cy={target.y - 7} r="1.4" fill="#f2a93b" />
+
+                  {/* Elbow connector node with radar pulse */}
+                  <circle cx="136" cy="76" r="1.8" fill="#f2a93b" />
+                  <circle cx="136" cy="76" r="3.2" fill="none" stroke="#f2a93b" strokeWidth="0.4" opacity="0.6">
+                    <animate attributeName="r" values="2;4.5;2" dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2s" repeatCount="indefinite" />
+                  </circle>
+
+                  {/* Terminal shelf tick */}
+                  <line x1="212" y1="72" x2="212" y2="76" stroke="#f2a93b" strokeWidth="1" />
+
+                  {/* Continuous Animated Telemetry Data Packet Pulses traveling along leader line */}
+                  <circle r="1.8" fill="#FFDE59" filter={`url(#${mapId}-pinGlow)`}>
+                    <animateMotion
+                      path={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                      dur="2.2s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                  <circle r="0.9" fill="#ffffff">
+                    <animateMotion
+                      path={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                      dur="2.2s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                  <circle r="1.2" fill="#FFDE59" opacity="0.7">
+                    <animateMotion
+                      path={`M ${target.x.toFixed(1)} ${(target.y - 7).toFixed(1)} L 136 76 L 212 76`}
+                      dur="2.2s"
+                      begin="1.1s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+
+                  {/* Tactical Callout Box — Perfectly aligned and proportioned */}
+                  <g
+                    opacity={phase >= 5 ? 1 : 0}
+                    style={{
+                      transform: phase >= 5 ? 'translateY(0)' : 'translateY(4px)',
+                      transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
+                    }}
+                  >
+                    {/* Background Glass Panel */}
+                    <rect
+                      x="118"
+                      y="32"
+                      width="94"
+                      height="44"
+                      rx="2.5"
+                      fill="#06121f"
+                      fillOpacity="0.95"
+                      stroke="#f2a93b"
+                      strokeWidth="0.75"
+                      strokeOpacity="0.8"
+                    />
+
+                    {/* Tactical corner accent brackets */}
+                    <path d="M 118 38 L 118 32 L 124 32" fill="none" stroke="#f2a93b" strokeWidth="1" />
+                    <path d="M 206 32 L 212 32 L 212 38" fill="none" stroke="#f2a93b" strokeWidth="1" />
+
+                    {/* Row 1: Header / Status with Green Dot & Tag */}
+                    <circle cx="125" cy="39" r="1.3" fill="#22c55e">
+                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite" />
+                    </circle>
+                    <text
+                      x="129"
+                      y="40.2"
+                      fill="#f2a93b"
+                      fontSize="4"
+                      fontFamily="'IBM Plex Mono', monospace"
+                      fontWeight="600"
+                      letterSpacing="0.8"
+                    >
+                      {cardLines.tag}{typingStep === 1 && '_'}
+                    </text>
+
+                    {/* Subtle Hairline Divider */}
+                    <line x1="123" y1="43" x2="207" y2="43" stroke="rgba(242,169,59,0.22)" strokeWidth="0.35" strokeDasharray="3 2" />
+
+                    {/* Row 2: Title — AkashVahini HQ */}
+                    <text
+                      x="125"
+                      y="51.5"
+                      fill="#ffffff"
+                      fontSize="6.6"
+                      fontFamily="'Space Grotesk', sans-serif"
+                      fontWeight="700"
+                      letterSpacing="0.2"
+                    >
+                      {cardLines.title}{typingStep === 2 && '_'}
+                    </text>
+
+                    {/* Row 3: Subtitle — NIT Rourkela Campus */}
+                    <text
+                      x="125"
+                      y="60"
+                      fill="rgba(255,255,255,0.72)"
+                      fontSize="4.7"
+                      fontFamily="'Space Grotesk', sans-serif"
+                      fontWeight="500"
+                    >
+                      {cardLines.sub}{typingStep === 3 && '_'}
+                    </text>
+
+                    {/* Row 4: Coordinates — Odisha · 22.26°N 84.90°E */}
+                    <text
+                      x="125"
+                      y="68"
+                      fill="#38bdf8"
+                      fontSize="4.2"
+                      fontFamily="'IBM Plex Mono', monospace"
+                      fontWeight="600"
+                      letterSpacing="0.3"
+                    >
+                      {cardLines.coords}{typingStep === 4 && '_'}
+                    </text>
+                  </g>
+                </g>
+              )}
             </g>
           )}
         </svg>
@@ -721,7 +888,6 @@ function FallbackScene({ progress }) {
           backgroundImage: "url('/textures/earth_atmos_2048.jpg')",
           backgroundSize: 'auto 100%',
           backgroundPosition: `${72 + progress * 34}% center`,
-          animation: 'globe-spin 24s linear infinite',
         }}
       >
         <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.33),transparent_18%),linear-gradient(120deg,transparent_50%,rgba(4,13,29,0.6))]" />
@@ -763,7 +929,7 @@ class WebGLSceneBoundary extends React.Component {
   }
 }
 
-export default function Drone3DCanvas({ progress = 0, className = '', showMap = false }) {
+export default function Drone3DCanvas({ progress = 0, className = '' }) {
   const [webGLAvailable] = useState(() => {
     const canvas = document.createElement('canvas');
     const context =
@@ -781,7 +947,6 @@ export default function Drone3DCanvas({ progress = 0, className = '', showMap = 
       ) : (
         <FallbackScene progress={progress} />
       )}
-      {showMap && <IndiaMapOverlay progress={progress} />}
     </div>
   );
 }

@@ -1,10 +1,8 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Target, Award, Users, ChevronRight } from 'lucide-react';
 import { IndiaMapPanel } from './Drone3DCanvas';
 
 export default function About() {
-  const aboutRef = useRef(null);
-
   const team = [
     {
       name: 'Akshay Kumar Gardia',
@@ -45,7 +43,7 @@ export default function About() {
   ];
 
   return (
-    <section id="about" ref={aboutRef} className="py-24 bg-navy relative border-t border-white/10 overflow-hidden">
+    <section id="about" className="py-24 bg-navy relative border-t border-white/10 overflow-hidden">
       {/* Background radial accent */}
       <div className="absolute top-1/4 right-0 w-80 h-80 bg-amber/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -66,7 +64,7 @@ export default function About() {
             </p>
           </div>
 
-          <div className="lg:col-span-5 w-full max-w-[480px] justify-self-end">
+          <div className="lg:col-span-5 w-full max-w-[480px] mx-auto lg:mx-0 justify-self-end">
             <div className="h-[340px] sm:h-[380px] lg:h-[440px] relative bg-[#06101a]/80 overflow-hidden border border-white/5 rounded-sm shadow-[inset_0_0_40px_rgba(242,169,59,0.04)]">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_55%_48%,rgba(242,169,59,0.07),transparent_65%)]" />
               <IndiaMapPanel />

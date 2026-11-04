@@ -30,6 +30,7 @@ export default {
         accentgreen: '#3f9463',
       },
       fontFamily: {
+        magz: ['Magz', 'Space Grotesk', 'sans-serif'],
         sans: ['Inter', 'sans-serif'],
         display: ['Space Grotesk', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],

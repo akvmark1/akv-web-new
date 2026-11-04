@@ -6,7 +6,6 @@ import {
   SunMedium,
   HardHat,
   Users2,
-  Check,
   ArrowRight,
 } from 'lucide-react';
 
@@ -106,7 +105,7 @@ export default function Applications() {
             return (
               <div
                 key={idx}
-                className="glass-panel p-8 rounded-sm border border-white/10 hover:border-amber/40 transition-all duration-300 group flex flex-col justify-between"
+                className="glass-panel p-6 md:p-8 rounded-sm border border-white/10 hover:border-amber/40 transition-all duration-300 group flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-6">
